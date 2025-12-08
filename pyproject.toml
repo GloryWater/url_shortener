@@ -1,0 +1,32 @@
+[project]
+name = "url-shortener-prod"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "aiosqlite>=0.21.0",
+    "asyncpg>=0.30.0",
+    "fastapi>=0.121.1",
+    "greenlet>=3.2.4",
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "sqlalchemy>=2.0.44",
+    "uvicorn>=0.38.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.ruff]
+# Ruff - это новый супер-быстрый инструмент, который заменяет и flake8, и isort
+line-length = 88
+lint.select = ["E", "F", "I"] # E/F - ошибки pep8, I - сортировка импортов
