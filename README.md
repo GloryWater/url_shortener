@@ -29,7 +29,7 @@
 *   **База данных:** PostgreSQL 17 (Docker)
 *   **ORM:** SQLAlchemy 2.0 (Async Session)
 *   **Драйвер:** asyncpg (High-performance PostgreSQL driver)
-*   **Миграции:** Alembic (опционально, если используется)
+*   **Миграции:** Alembic
 
 ### Quality Assurance (QA)
 *   **Тесты:** Pytest + Pytest-Asyncio
