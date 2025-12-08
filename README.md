@@ -62,3 +62,5 @@ source venv/bin/activate  # Linux/MacOS
 
 # Установка зависимостей
 pip install -r requirements.txt
+
+```
