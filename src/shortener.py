@@ -93,7 +93,11 @@ async def generate_short_url(
             raise ValueError("Custom slug must be 4-12 alphanumeric characters")
         try:
             await add_to_db_func(
-                custom_slug, long_url, session, custom_slug=True, expires_at=expires_at  # type: ignore[call-arg]
+                custom_slug,
+                long_url,
+                session,
+                custom_slug=True,
+                expires_at=expires_at,  # type: ignore[call-arg]
             )
             return custom_slug, True
         except SlugAlreadyExistsError as ex:
@@ -106,7 +110,11 @@ async def generate_short_url(
         slug = generate_random_slug()
         try:
             await add_to_db_func(
-                slug, long_url, session, custom_slug=False, expires_at=expires_at  # type: ignore[call-arg]
+                slug,
+                long_url,
+                session,
+                custom_slug=False,
+                expires_at=expires_at,  # type: ignore[call-arg]
             )
             return slug, False
         except SlugAlreadyExistsError as ex:

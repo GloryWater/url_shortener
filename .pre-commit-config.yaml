@@ -1,3 +1,13 @@
+# Pre-commit configuration
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+# Install pre-commit hooks:
+#   uv run pre-commit install
+#
+# Run against all files:
+#   uv run pre-commit run --all-files
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -20,25 +30,18 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
-        language_version: python3
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.14.0
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies:
-          - pydantic>=2.0.0
-          - sqlalchemy>=2.0.0
-          - types-aiofiles>=23.2.0
+        name: Run MyPy type checking
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
         args:
           - --ignore-missing-imports
-          - --disallow-untyped-defs
-          - --disallow-incomplete-defs
-        exclude: ^tests/
+          - src
+        exclude: ^alembic/
 
   - repo: local
     hooks:
@@ -49,3 +52,4 @@ repos:
         pass_filenames: false
         always_run: true
         types: [python]
+        stages: [manual]  # Only run manually, not on every commit

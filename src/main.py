@@ -194,18 +194,18 @@ def get_client_ip(request: Request) -> str | None:
     """Get client IP address from request."""
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else None
+        return str(forwarded.split(",")[0].strip())
+    return str(request.client.host) if request.client else None
 
 
 def get_user_agent(request: Request) -> str | None:
     """Get user agent from request."""
-    return request.headers.get("User-Agent")
+    return str(request.headers.get("User-Agent")) or None
 
 
 def get_referer(request: Request) -> str | None:
     """Get referer from request."""
-    return request.headers.get("Referer")
+    return str(request.headers.get("Referer")) or None
 
 
 # ============================================
