@@ -150,14 +150,14 @@ uv run alembic upgrade head
 ### 6. Запуск сервера
 
 ```bash
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8001
 ```
 
-Сервер запустится на `http://localhost:8000`
+Сервер запустится на `http://localhost:8001`
 
 ### 7. Открыть фронтенд
 
-Перейдите на `http://localhost:8000` — там уже ждет стильный интерфейс!
+Перейдите на `http://localhost:8001` — там уже ждет стильный интерфейс!
 
 ---
 
@@ -194,7 +194,7 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ### Создание короткой ссылки
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/urls \
+curl -X POST http://localhost:8001/api/v1/urls \
   -H "Content-Type: application/json" \
   -d '{"long_url": "https://github.com/GloryWater/url_shortener"}'
 ```
@@ -203,7 +203,7 @@ curl -X POST http://localhost:8000/api/v1/urls \
 ```json
 {
   "data": "aB3xY9",
-  "short_url": "http://localhost:8000/aB3xY9",
+  "short_url": "http://localhost:8001/aB3xY9",
   "long_url": "https://github.com/GloryWater/url_shortener",
   "custom_slug": false,
   "expires_at": null
@@ -213,7 +213,7 @@ curl -X POST http://localhost:8000/api/v1/urls \
 ### Создание с кастомным slug
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/urls \
+curl -X POST http://localhost:8001/api/v1/urls \
   -H "Content-Type: application/json" \
   -d '{"long_url": "https://example.com", "custom_slug": "mylink"}'
 ```
@@ -222,7 +222,7 @@ curl -X POST http://localhost:8000/api/v1/urls \
 ```json
 {
   "data": "mylink",
-  "short_url": "http://localhost:8000/mylink",
+  "short_url": "http://localhost:8001/mylink",
   "long_url": "https://example.com",
   "custom_slug": true,
   "expires_at": null
@@ -232,7 +232,7 @@ curl -X POST http://localhost:8000/api/v1/urls \
 ### Создание с сроком действия
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/urls \
+curl -X POST http://localhost:8001/api/v1/urls \
   -H "Content-Type: application/json" \
   -d '{"long_url": "https://example.com", "expires_in_days": 30}'
 ```
@@ -240,7 +240,7 @@ curl -X POST http://localhost:8000/api/v1/urls \
 ### Получение информации о ссылке
 
 ```bash
-curl http://localhost:8000/api/v1/urls/aB3xY9
+curl http://localhost:8001/api/v1/urls/aB3xY9
 ```
 
 **Ответ:**
@@ -259,7 +259,7 @@ curl http://localhost:8000/api/v1/urls/aB3xY9
 ### Статистика кликов
 
 ```bash
-curl http://localhost:8000/api/v1/urls/aB3xY9/stats
+curl http://localhost:8001/api/v1/urls/aB3xY9/stats
 ```
 
 **Ответ:**
@@ -274,13 +274,13 @@ curl http://localhost:8000/api/v1/urls/aB3xY9/stats
 ### Список ссылок с пагинацией
 
 ```bash
-curl "http://localhost:8000/api/v1/urls?page=1&limit=20"
+curl "http://localhost:8001/api/v1/urls?page=1&limit=20"
 ```
 
 ### Удаление ссылки
 
 ```bash
-curl -X DELETE http://localhost:8000/api/v1/urls/aB3xY9
+curl -X DELETE http://localhost:8001/api/v1/urls/aB3xY9
 ```
 
 **Ответ:**
@@ -294,7 +294,7 @@ curl -X DELETE http://localhost:8000/api/v1/urls/aB3xY9
 ### Health Check
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 ```
 
 **Ответ:**
@@ -407,9 +407,9 @@ ENVIRONMENT=production
 ## 📡 Swagger документация
 
 После запуска сервера доступна интерактивная API документация:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
-- **OpenAPI JSON**: `http://localhost:8000/openapi.json`
+- **Swagger UI**: `http://localhost:8001/docs`
+- **ReDoc**: `http://localhost:8001/redoc`
+- **OpenAPI JSON**: `http://localhost:8001/openapi.json`
 
 ---
 
@@ -460,7 +460,7 @@ POSTGRES_DB=postgres
 SQL_ECHO=false
 
 # CORS
-ALLOWED_ORIGINS=http://localhost:5500,http://localhost:8000
+ALLOWED_ORIGINS=http://localhost:5500,http://localhost:8001
 
 # Rate Limiting
 RATE_LIMIT_PER_MINUTE=60
@@ -521,6 +521,6 @@ SECRET_KEY=change-me-in-production
 
 **Made with ❤️ using FastAPI + PostgreSQL + SQLAlchemy 2.0**
 
-[View on GitHub](https://github.com/GloryWater/url_shortener) • [API Docs](http://localhost:8000/docs)
+[View on GitHub](https://github.com/GloryWater/url_shortener) • [API Docs](http://localhost:8001/docs)
 
 </div>

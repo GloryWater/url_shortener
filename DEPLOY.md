@@ -122,12 +122,14 @@ services:
     container_name: url-shortener
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - PORT=8001
     depends_on:
       - db
 
