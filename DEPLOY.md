@@ -47,6 +47,8 @@ ssh-copy-id -i ~/.ssh/github_actions_deploy.pub user@your-server
 ```
 
 > ⚠️ **Важно:** Приватный ключ должен быть в формате OpenSSH (начинается с `-----BEGIN OPENSSH PRIVATE KEY-----`)
+>
+> 🔒 **Никогда не коммитьте приватные ключи в репозиторий!**
 
 ---
 
