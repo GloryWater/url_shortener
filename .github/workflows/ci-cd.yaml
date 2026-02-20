@@ -150,7 +150,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/url-shortener:latest,ghcr.io/${{ github.repository }}/url-shortener:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner, 'toLowerCase' }}/url-shortener:latest,ghcr.io/${{ github.repository_owner, 'toLowerCase' }}/url-shortener:${{ github.sha }}
 
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
