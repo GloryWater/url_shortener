@@ -15,8 +15,16 @@ env/
 .pytest_cache/
 .cache/
 .coverage
-.coverage.*
+.coverage.xml
+coverage.xml
 htmlcov/
+.coverage.*
+
+# pre-commit
+.pre-commit-config.yaml.local
+
+# Ruff
+.ruff_cache/
 
 # Packaging
 build/

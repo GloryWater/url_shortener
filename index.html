@@ -1,223 +1,757 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shortener</title>
-  <!-- Подключаем округлый, дружелюбный шрифт Quicksand -->
+  <meta name="theme-color" content="#0d0d0d" />
+  <title>URL Shortener | 2026</title>
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      /* Палитра */
-      --color-lilac: #E0C3FC;
-      --color-blue: #8EC5FC;
-      --text-dark: #475569;
-      --text-light: #ffffff;
-      --glass-bg: rgba(255, 255, 255, 0.75);
-      --glass-border: rgba(255, 255, 255, 0.6);
-      --shadow: 0 8px 32px 0 rgba(142, 197, 252, 0.3);
+      /* Colors */
+      --bg-primary: #030303;
+      --bg-secondary: #0a0a0a;
+      --bg-card: rgba(20, 20, 20, 0.6);
+      --bg-glass: rgba(255, 255, 255, 0.03);
+      
+      --accent-primary: #00ff88;
+      --accent-secondary: #00d4ff;
+      --accent-tertiary: #ff006e;
+      --accent-purple: #7b2cbf;
+      
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #505050;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 255, 136, 0.3);
+      
+      /* Effects */
+      --glow-primary: 0 0 40px rgba(0, 255, 136, 0.15);
+      --glow-secondary: 0 0 60px rgba(0, 212, 255, 0.1);
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      
+      /* Animation */
+      --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+      --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
-      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
-      /* Градиентный фон: от лилового к голубому */
-      background-color: var(--color-blue);
-      background-image: linear-gradient(135deg, var(--color-lilac) 0%, var(--color-blue) 100%);
-      font-family: 'Quicksand', sans-serif;
-      color: var(--text-dark);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
+      overflow-x: hidden;
+      line-height: 1.6;
     }
 
-    /* Эффект матового стекла */
-    main {
+    /* Animated Background */
+    .bg-gradient {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      max-width: 480px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px);
-      /* Размытие фона за карточкой */
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 24px;
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow);
-      padding: 2.5rem;
-      text-align: center;
-      position: relative;
+      height: 100%;
+      z-index: -1;
       overflow: hidden;
     }
 
-    /* Декоративный круг на фоне карточки для глубины */
-    main::before {
+    .bg-gradient::before {
       content: '';
       position: absolute;
-      top: -50px;
-      left: -50px;
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(to right, var(--color-lilac), var(--color-blue));
-      border-radius: 50%;
-      opacity: 0.5;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(123, 44, 191, 0.06) 0%, transparent 40%);
+      animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Grid Pattern */
+    .bg-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       z-index: -1;
+      background-image: 
+        linear-gradient(var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.03;
     }
 
-    h1 {
-      margin: 0 0 0.5rem 0;
-      font-size: 2rem;
-      font-weight: 700;
-      background: -webkit-linear-gradient(45deg, #9f7aea, #4299e1);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* Floating Orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
     }
 
-    p {
-      font-size: 1rem;
-      color: #64748b;
-      margin-bottom: 2rem;
-      line-height: 1.5;
+    .orb-1 {
+      width: 400px;
+      height: 400px;
+      background: rgba(0, 255, 136, 0.1);
+      top: 10%;
+      left: 20%;
+      animation-delay: 0s;
     }
 
-    form {
+    .orb-2 {
+      width: 300px;
+      height: 300px;
+      background: rgba(0, 212, 255, 0.1);
+      top: 60%;
+      right: 10%;
+      animation-delay: -7s;
+    }
+
+    .orb-3 {
+      width: 250px;
+      height: 250px;
+      background: rgba(123, 44, 191, 0.1);
+      bottom: 20%;
+      left: 30%;
+      animation-delay: -14s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -30px) scale(1.05); }
+      50% { transform: translate(-20px, 20px) scale(0.95); }
+      75% { transform: translate(20px, 30px) scale(1.02); }
+    }
+
+    /* Main Container */
+    .container {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
     }
 
-    label {
-      display: none;
-      /* Прячем лейбл, оставляем плейсхолдер */
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      animation: slideDown 0.8s var(--ease-out);
     }
 
-    /* Мягкий инпут */
-    input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 1rem 1.25rem;
-      border-radius: 16px;
-      border: 2px solid transparent;
-      background: rgba(255, 255, 255, 0.8);
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-dark);
-      transition: all 0.3s ease;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    }
-
-    input:focus {
-      outline: 1px;
-      background: white;
-      border-color: #b794f4;
-      /* Нежный фиолетовый */
-      box-shadow: 0 4px 12px rgba(183, 148, 244, 0.2);
-    }
-
-    input::placeholder {
-      color: #94a3b8;
-      font-weight: 500;
-    }
-
-    /* Кнопка с градиентом */
-    button {
-      width: 100%;
-      padding: 1rem;
-      border: none;
-      border-radius: 16px;
-      background: linear-gradient(90deg, #b794f4, #63b3ed);
-      color: white;
-      font-family: inherit;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 15px rgba(99, 179, 237, 0.35);
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(99, 179, 237, 0.45);
-    }
-
-    button:active {
-      transform: translateY(1px);
-    }
-
-    /* Результат */
-    #result {
-      margin-top: 2rem;
-      background: white;
-      padding: 1rem;
-      border-radius: 16px;
-      border: 1px dashed #cbd5e1;
-      animation: slideUp 0.4s ease-out;
-    }
-
-    .short-link {
-      display: block;
-      margin-top: 0.5rem;
-      color: #805ad5;
-      /* Насыщенный фиолетовый */
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 1.2rem;
-      word-break: break-all;
-      transition: color 0.2s;
-    }
-
-    .short-link:hover {
-      color: #553c9a;
-      text-decoration: underline;
-    }
-
-    #error {
-      margin-top: 1rem;
-      color: #e53e3e;
-      background: #fff5f5;
-      padding: 0.5rem;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    @keyframes slideUp {
+    @keyframes slideDown {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(-30px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: var(--glow-primary);
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    h1 .gradient-text {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% 200%;
+      animation: gradientShift 5s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Main Card */
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-lg);
+      animation: scaleUp 0.6s var(--ease-out) 0.2s both;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 0.5; transform: translateX(-100%); }
+      50% { opacity: 1; transform: translateX(100%); }
+    }
+
+    @keyframes scaleUp {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1.25rem;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      transition: color 0.3s ease;
+    }
+
+    input[type="url"] {
+      width: 100%;
+      padding: 1.125rem 1.25rem 1.125rem 3.25rem;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input[type="url"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="url"]:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    input[type="url"]:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1), var(--glow-primary);
+    }
+
+    input[type="url"]:focus + .input-icon {
+      color: var(--accent-primary);
+    }
+
+    /* Button */
+    .btn {
+      width: 100%;
+      padding: 1.125rem 2rem;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border: none;
+      border-radius: 16px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--bg-primary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-icon {
+      font-size: 1.25rem;
+      transition: transform 0.3s ease;
+    }
+
+    .btn:hover .btn-icon {
+      transform: rotate(45deg);
+    }
+
+    /* Result */
+    .result {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      animation: slideUp 0.5s var(--ease-out);
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .result-link-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--bg-primary);
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .result-link {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: var(--accent-primary);
+      text-decoration: none;
+      word-break: break-all;
+      transition: color 0.3s ease;
+    }
+
+    .result-link:hover {
+      color: var(--accent-secondary);
+      text-decoration: underline;
+    }
+
+    .copy-btn {
+      padding: 0.625rem 1rem;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+    }
+
+    .copy-btn.copied {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      border-color: var(--accent-primary);
+    }
+
+    /* Error */
+    .error {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: rgba(255, 0, 110, 0.1);
+      border: 1px solid rgba(255, 0, 110, 0.3);
+      border-radius: 12px;
+      color: var(--accent-tertiary);
+      font-size: 0.875rem;
+      display: none;
+      animation: shake 0.5s var(--ease-elastic);
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    /* Loading */
+    .loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .loading-dots {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .loading-dots span {
+      width: 6px;
+      height: 6px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+
+    .loading-dots span:nth-child(1) { animation-delay: 0s; }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 1.25rem;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      animation: fadeIn 0.8s var(--ease-out) 0.4s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .footer a:hover {
+      color: var(--accent-primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container {
+        padding: 1.5rem;
+      }
+
+      .card {
+        padding: 1.75rem;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .result-link-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .copy-btn {
+        justify-content: center;
+      }
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--bg-primary);
+      border: 1px solid var(--accent-primary);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: all 0.4s var(--ease-elastic);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg-primary);
+      font-size: 0.875rem;
+    }
+
+    .toast-message {
+      color: var(--text-primary);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
   </style>
 </head>
-
 <body>
-  <main>
-    <h1>Сокращатель ссылок</h1>
-    <p>Превращаем длинные ссылки в короткие и красивые.</p>
+  <!-- Background Effects -->
+  <div class="bg-gradient"></div>
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-    <form id="short-form">
-      <label for="long-url">URL</label>
-      <input id="long-url" type="url" placeholder="Вставьте ссылку здесь..." required />
-      <button type="submit">Сделать коротко</button>
-    </form>
+  <main class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-text">ShortURL</span>
+      </div>
+      <h1>
+        Сокращай ссылки<br />
+        <span class="gradient-text">со скоростью света</span>
+      </h1>
+      <p class="subtitle">
+        Минималистичный сервис для создания коротких и запоминающихся ссылок
+      </p>
+    </header>
 
-    <div id="error"></div>
+    <!-- Main Card -->
+    <div class="card">
+      <form id="short-form">
+        <div class="form-group">
+          <label for="long-url">Вставьте вашу ссылку</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔗</span>
+            <input 
+              type="url" 
+              id="long-url" 
+              placeholder="https://example.com/very/long/url/that/needs/shortening" 
+              required 
+              autocomplete="off"
+            />
+          </div>
+        </div>
 
-    <div id="result" hidden>
-      <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">Готово! Ваша ссылка:</span>
-      <a class="short-link" id="short-link" target="_blank" rel="noopener noreferrer"></a>
+        <button type="submit" class="btn" id="submit-btn">
+          <span class="btn-text">Сократить ссылку</span>
+          <span class="btn-icon">→</span>
+        </button>
+      </form>
+
+      <div class="error" id="error"></div>
+
+      <div class="result" id="result">
+        <div class="result-label">✨ Готово! Ваша ссылка:</div>
+        <div class="result-link-wrapper">
+          <a class="result-link" id="short-link" target="_blank" rel="noopener noreferrer"></a>
+          <button class="copy-btn" id="copy-btn">
+            <span>📋</span>
+            <span>Копировать</span>
+          </button>
+        </div>
+      </div>
     </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="stat-links">0</div>
+        <div class="stat-label">Ссылок создано</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">6</div>
+        <div class="stat-label">Символов в slug</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">∞</div>
+        <div class="stat-label">Скорость работы</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>
+        Made with ❤️ using FastAPI + PostgreSQL<br />
+        <a href="https://github.com/GloryWater/url_shortener" target="_blank" rel="noopener noreferrer">
+          View on GitHub →
+        </a>
+      </p>
+    </footer>
   </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">✓</div>
+    <span class="toast-message">Скопировано в буфер!</span>
+  </div>
 
   <script>
     const form = document.getElementById("short-form");
@@ -225,65 +759,189 @@
     const errorBox = document.getElementById("error");
     const resultBox = document.getElementById("result");
     const shortLink = document.getElementById("short-link");
-    const btn = form.querySelector('button');
+    const copyBtn = document.getElementById("copy-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const btnText = submitBtn.querySelector(".btn-text");
+    const btnIcon = submitBtn.querySelector(".btn-icon");
+    const toast = document.getElementById("toast");
+    const statLinks = document.getElementById("stat-links");
 
-    const backendBase = "http://localhost:8000";
+    // Backend URL - обновите под ваш домен
+    const backendBase = window.location.origin;
+
+    // Load saved links count
+    let linksCount = parseInt(localStorage.getItem("shortenedLinksCount") || "0");
+    statLinks.textContent = linksCount;
+
+    // Animate stat on load
+    setTimeout(() => {
+      statLinks.style.transition = "color 0.5s ease";
+      statLinks.style.color = "var(--accent-primary)";
+      setTimeout(() => {
+        statLinks.style.color = "";
+      }, 500);
+    }, 1000);
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      errorBox.textContent = "";
-      errorBox.style.display = 'none';
-      resultBox.hidden = true;
+      hideError();
+      hideResult();
 
       const longUrl = input.value.trim();
       if (!longUrl) {
-        showError("Ой, вы забыли вставить ссылку!");
+        showError("Пожалуйста, введите ссылку");
         return;
       }
 
+      // Validate URL format
       try {
-        const originalBtnText = btn.textContent;
-        btn.textContent = "Колдуем...";
-        btn.disabled = true;
+        new URL(longUrl);
+      } catch {
+        showError("Некорректный формат ссылки. Добавьте https://");
+        return;
+      }
 
+      setLoading(true);
+
+      try {
         const response = await fetch(`${backendBase}/short_url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ long_url: longUrl }),
         });
 
-        btn.textContent = originalBtnText;
-        btn.disabled = false;
-
         if (!response.ok) {
-          let detail = "Не получилось сократить.";
+          let detail = "Что-то пошло не так. Попробуйте ещё раз.";
           try {
             const errorData = await response.json();
-            detail = errorData?.detail ?? detail;
-          } catch (_) { }
+            detail = errorData?.detail || detail;
+          } catch {}
           throw new Error(detail);
         }
 
         const data = await response.json();
         const slug = data?.data;
-        if (!slug) throw new Error("Сервер не вернул ссылку.");
+        
+        if (!slug) {
+          throw new Error("Сервер не вернул ссылку");
+        }
 
         const shortUrl = `${backendBase}/${slug}`;
         shortLink.textContent = shortUrl;
         shortLink.href = shortUrl;
-        resultBox.hidden = false;
+        
+        // Update stats
+        linksCount++;
+        localStorage.setItem("shortenedLinksCount", linksCount.toString());
+        statLinks.textContent = linksCount;
+
+        showResult();
       } catch (err) {
-        btn.disabled = false;
-        btn.textContent = "Сделать коротко ✨";
-        showError(err.message ?? "Что-то пошло не так");
+        showError(err.message || "Произошла ошибка при создании ссылки");
+      } finally {
+        setLoading(false);
       }
     });
 
-    function showError(msg) {
-      errorBox.textContent = msg;
-      errorBox.style.display = 'block';
+    // Copy functionality
+    copyBtn.addEventListener("click", async () => {
+      const url = shortLink.textContent;
+      
+      try {
+        await navigator.clipboard.writeText(url);
+        showCopySuccess();
+        showToast();
+      } catch {
+        // Fallback for older browsers
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        showCopySuccess();
+        showToast();
+      }
+    });
+
+    function setLoading(loading) {
+      if (loading) {
+        submitBtn.disabled = true;
+        btnText.innerHTML = `
+          <span class="loading">
+            Создаём
+            <span class="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+          </span>
+        `;
+        btnIcon.textContent = "";
+      } else {
+        submitBtn.disabled = false;
+        btnText.textContent = "Сократить ссылку";
+        btnIcon.textContent = "→";
+      }
     }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.add("show");
+    }
+
+    function hideError() {
+      errorBox.classList.remove("show");
+    }
+
+    function showResult() {
+      resultBox.classList.add("show");
+    }
+
+    function hideResult() {
+      resultBox.classList.remove("show");
+    }
+
+    function showCopySuccess() {
+      copyBtn.classList.add("copied");
+      copyBtn.innerHTML = '<span>✓</span><span>Скопировано!</span>';
+      
+      setTimeout(() => {
+        copyBtn.classList.remove("copied");
+        copyBtn.innerHTML = '<span>📋</span><span>Копировать</span>';
+      }, 2000);
+    }
+
+    function showToast() {
+      toast.classList.add("show");
+      
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+    // Add subtle parallax effect on mouse move
+    document.addEventListener("mousemove", (e) => {
+      const orbs = document.querySelectorAll(".orb");
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+
+      orbs.forEach((orb, index) => {
+        const speed = (index + 1) * 20;
+        const xOffset = (x - 0.5) * speed;
+        const yOffset = (y - 0.5) * speed;
+        orb.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+      });
+    });
+
+    // Input focus effect
+    input.addEventListener("focus", () => {
+      document.querySelector(".card").style.borderColor = "var(--border-glow)";
+    });
+
+    input.addEventListener("blur", () => {
+      document.querySelector(".card").style.borderColor = "var(--border-subtle)";
+    });
   </script>
 </body>
-
 </html>

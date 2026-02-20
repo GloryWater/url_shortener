@@ -1,68 +1,268 @@
 # ⚡ FastAPI URL Shortener
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+Высокопроизводительный сервис сокращения ссылок с современным асинхронным стеком и элегантным фронтендом.
+
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.121+-005571?style=for-the-badge&logo=fastapi)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
-![Coverage](https://img.shields.io/badge/Tests-Pytest-green?style=for-the-badge&logo=pytest&logoColor=white)
-
-> Высокопроизводительный сервис сокращения ссылок с современным асинхронным стеком и эстетичным фронтендом.
-
-Проект представляет собой **Fullstack приложение**: мощный Backend на FastAPI и легкий, стильный Frontend (Vanilla JS + CSS Soft UI). Реализована полная контейнеризация базы данных.
+![Tests](https://img.shields.io/badge/tests-12%20passed-green?style=for-the-badge&logo=pytest)
+![Coverage](https://img.shields.io/codecov/c/github/GloryWater/url_shortener?style=for-the-badge&logo=codecov)
+![CI/CD](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/ci-cd.yaml?style=for-the-badge&logo=github-actions)
 
 ---
 
-## 📸 Демонстрация интерфейса
+## 🌟 Особенности
 
-<!-- Сделай скриншот своего красивого сайта, положи в папку assets/ или корень и раскомментируй строку ниже -->
-<!-- ![Dashboard Screenshot](screenshot.png) -->
-*Интерфейс выполнен в стиле Soft UI / Glassmorphism с акцентом на приятный пользовательский опыт.*
+- **Асинхронный backend** на FastAPI + Uvicorn
+- **PostgreSQL 17** с асинхронным драйвером `asyncpg`
+- **SQLAlchemy 2.0** с async session
+- **Валидация данных** через Pydantic v2
+- **Контейнеризация БД** через Docker Compose
+- **Стильный фронтенд** (Vanilla JS + CSS Soft UI)
+- **Покрытие тестами** (pytest + httpx + aiosqlite)
+- **Переменные окружения** для конфигурации
 
 ---
 
-## [TEST LINK](https://evgeniy.sytcevich.glory.fvds.ru/)
+## 🛠️ Технологический стек
 
-## 🛠️ Технический стек
+| Категория       | Технологии                                      |
+|-----------------|-------------------------------------------------|
+| **Backend**     | FastAPI, Uvicorn                                |
+| **Database**    | PostgreSQL 17, SQLAlchemy 2.0, asyncpg          |
+| **Testing**     | pytest, pytest-asyncio, httpx, aiosqlite        |
+| **Frontend**    | Vanilla JavaScript, CSS3 (Soft UI)              |
+| **DevOps**      | Docker, Docker Compose                          |
 
-### Backend & Database
-*   **Фреймворк:** [FastAPI](https://fastapi.tiangolo.com/) (Asynchronous)
-*   **Сервер:** Uvicorn
-*   **База данных:** PostgreSQL 17 (Docker)
-*   **ORM:** SQLAlchemy 2.0 (Async Session)
-*   **Драйвер:** asyncpg (High-performance PostgreSQL driver)
-*   **Миграции:** Alembic
+---
 
-### Quality Assurance (QA)
-*   **Тесты:** Pytest + Pytest-Asyncio
-*   **Клиент тестов:** HTTPX (для асинхронных запросов к API)
-*   **Тестовая БД:** aiosqlite (для быстрых unit-тестов in-memory)
+## 📦 Структура проекта
 
-### Frontend
-*   **Стиль:** CSS3 Custom Properties, Flexbox/Grid
-*   **Логика:** Vanilla JavaScript (Fetch API)
-*   **Дизайн:** Адаптивный, Dark/Light mode ready
+```
+url_shortener/
+├── src/
+│   ├── main.py           # Точки входа API (FastAPI app)
+│   ├── service.py        # Бизнес-логика сервиса
+│   ├── shortener.py      # Генерация случайных slug
+│   ├── schemas.py        # Pydantic схемы (валидация)
+│   ├── exceptions.py     # Кастомные исключения
+│   └── database/
+│       ├── __init__.py   # Database package
+│       ├── models.py     # SQLAlchemy модели
+│       ├── db.py         # Настройки подключения к БД
+│       └── crud.py       # Операции с БД
+├── tests/
+│   ├── test_api.py       # API тесты
+│   ├── test_service.py   # Тесты сервиса
+│   └── conftest.py       # Фикстуры pytest
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yaml    # GitHub Actions workflow
+├── .pre-commit-config.yaml  # Pre-commit хуки
+├── Dockerfile          # Docker образ приложения
+├── index.html            # Фронтенд (Soft UI дизайн)
+├── docker-compose.yaml   # PostgreSQL контейнер
+├── .env.example          # Пример переменных окружения
+├── pyproject.toml        # Зависимости проекта
+└── pytest.ini            # Конфигурация тестов
+```
 
 ---
 
 ## 🚀 Быстрый старт
 
-### 1. Предварительные требования
-*   Python 3.10+
-*   Docker & Docker Compose
+### Предварительные требования
 
-### 2. Клонирование и установка зависимостей
+- Python 3.9+
+- uv (рекомендуется) или pip
+- Docker & Docker Compose (для БД)
+
+### 1. Клонирование репозитория
 
 ```bash
 git clone https://github.com/GloryWater/url_shortener.git
 cd url_shortener
+```
 
-# Создание и активация виртуального окружения
+### 2. Установка зависимостей
+
+```bash
+# Создание виртуального окружения и установка зависимостей через uv
+uv sync
+
+# Или через pip:
 python -m venv venv
-source venv/bin/activate  # Linux/MacOS
-# venv\Scripts\activate   # Windows
-
-# Установка зависимостей
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
 pip install -r requirements.txt
+```
+
+### 3. Настройка переменных окружения
+
+Скопируйте `.env.example` в `.env` и настройте при необходимости:
+
+```bash
+cp .env.example .env
+```
+
+Основные переменные:
+- `POSTGRES_HOST`, `POSTGRES_PORT` — хост и порт БД
+- `POSTGRES_USER`, `POSTGRES_PASSWORD` — учетные данные БД
+- `SQL_ECHO` — логирование SQL-запросов (`true`/`false`)
+- `ALLOWED_ORIGINS` — разрешенные CORS origin (через запятую)
+
+### 4. Запуск базы данных (Docker)
+
+```bash
+docker-compose up -d
+```
+
+База данных будет доступна на `localhost:6432`.
+
+### 5. Запуск сервера
+
+```bash
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Сервер запустится на `http://localhost:8000`
+
+### 6. Открыть фронтенд
+
+Перейдите на `http://localhost:8000` — там уже ждет стильный интерфейс!
+
+---
+
+## 📡 API Endpoints
+
+| Метод  | Endpoint      | Описание                    | Тело запроса                     |
+|--------|---------------|-----------------------------|----------------------------------|
+| `GET`  | `/`           | Главная страница (фронтенд) | —                                |
+| `POST` | `/short_url`  | Создать короткую ссылку     | `{"long_url": "https://..."}`    |
+| `GET`  | `/{slug}`     | Редирект на оригинальную    | —                                |
+
+### Swagger документация
+
+После запуска сервера доступна интерактивная API документация:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+### Примеры запросов
+
+**Создание короткой ссылки:**
+
+```bash
+curl -X POST http://localhost:8000/short_url \
+  -H "Content-Type: application/json" \
+  -d '{"long_url": "https://github.com/GloryWater/url_shortener"}'
+```
+
+**Ответ:**
+```json
+{
+  "data": "aB3xY9"
+}
+```
+
+**Редирект:**
+
+```bash
+curl -I http://localhost:8000/aB3xY9
+```
+
+---
+
+## 🧪 Запуск тестов
+
+```bash
+# Запустить все тесты
+pytest
+
+# Запустить с покрытием
+pytest --cov=src
+
+# Запустить конкретный тест
+pytest tests/test_api.py -v
+```
+
+> Тесты используют `aiosqlite` (in-memory SQLite) для изоляции и скорости.
+
+---
+
+## 🔍 Pre-commit хуки
+
+Проект использует [pre-commit](https://pre-commit.com/) для автоматической проверки кода перед коммитом:
+
+```bash
+# Установка pre-commit хуков
+uv run pre-commit install
+
+# Запуск всех проверок вручную
+uv run pre-commit run --all-files
+```
+
+**Включенные проверки:**
+- ✨ **Ruff** — линтинг и форматирование
+- 🎨 **Black** — форматирование кода
+- 📝 **MyPy** — статическая проверка типов
+- 🧹 **pre-commit-hooks** — trailing whitespace, end-of-file, check yaml/json
+
+---
+
+## 🚀 CI/CD
+
+Проект использует **GitHub Actions** для автоматической проверки:
+
+- 🔍 **Lint** — Ruff + Black + MyPy
+- 🧪 **Tests** — pytest с покрытием
+- 🔒 **Security** — проверка зависимостей через Safety
+- 📦 **Build** — сборка Docker образа (только main branch)
+
+Покрытие тестов автоматически публикуется на [Codecov](https://codecov.io/).
+
+---
+
+## 🎨 Особенности фронтенда
+
+- **Soft UI / Glassmorphism** дизайн
+- **Адаптивная верстка** (Flexbox/Grid)
+- **Градиентный фон** (лиловый → голубой)
+- **Анимации** при загрузке результата
+- **Валидация** на клиенте
+- **Шрифт Quicksand** от Google Fonts
+
+---
+
+## ⚙️ Конфигурация базы данных
+
+По умолчанию приложение подключается к:
 
 ```
+postgresql+asyncpg://postgres:postgres@localhost:6432/postgres
+```
+
+Для изменения отредактируйте `src/database/db.py`.
+
+---
+
+## 📝 Лицензия
+
+MIT
+
+---
+
+## 👤 Автор
+
+**Evgeniy Sytcevich**
+
+Проект создан для демонстрации современных возможностей FastAPI и асинхронного стека Python.
+
+---
+
+<div align="center">
+
+**Made with ❤️ using FastAPI + PostgreSQL + SQLAlchemy 2.0**
+
+</div>
