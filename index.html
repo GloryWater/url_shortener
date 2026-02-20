@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d0d0d" />
   <title>URL Shortener | 2026</title>
-  
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,24 +18,24 @@
       --bg-secondary: #0a0a0a;
       --bg-card: rgba(20, 20, 20, 0.6);
       --bg-glass: rgba(255, 255, 255, 0.03);
-      
+
       --accent-primary: #00ff88;
       --accent-secondary: #00d4ff;
       --accent-tertiary: #ff006e;
       --accent-purple: #7b2cbf;
-      
+
       --text-primary: #ffffff;
       --text-secondary: #a0a0a0;
       --text-muted: #505050;
-      
+
       --border-subtle: rgba(255, 255, 255, 0.08);
       --border-glow: rgba(0, 255, 136, 0.3);
-      
+
       /* Effects */
       --glow-primary: 0 0 40px rgba(0, 255, 136, 0.15);
       --glow-secondary: 0 0 60px rgba(0, 212, 255, 0.1);
       --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-      
+
       /* Animation */
       --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
       --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -78,7 +78,7 @@
       left: -50%;
       width: 200%;
       height: 200%;
-      background: 
+      background:
         radial-gradient(circle at 20% 80%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
         radial-gradient(circle at 40% 40%, rgba(123, 44, 191, 0.06) 0%, transparent 40%);
@@ -98,7 +98,7 @@
       width: 100%;
       height: 100%;
       z-index: -1;
-      background-image: 
+      background-image:
         linear-gradient(var(--border-subtle) 1px, transparent 1px),
         linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
       background-size: 60px 60px;
@@ -690,11 +690,11 @@
           <label for="long-url">Вставьте вашу ссылку</label>
           <div class="input-wrapper">
             <span class="input-icon">🔗</span>
-            <input 
-              type="url" 
-              id="long-url" 
-              placeholder="https://example.com/very/long/url/that/needs/shortening" 
-              required 
+            <input
+              type="url"
+              id="long-url"
+              placeholder="https://example.com/very/long/url/that/needs/shortening"
+              required
               autocomplete="off"
             />
           </div>
@@ -821,7 +821,7 @@
 
         const data = await response.json();
         const slug = data?.data;
-        
+
         if (!slug) {
           throw new Error("Сервер не вернул ссылку");
         }
@@ -829,7 +829,7 @@
         const shortUrl = `${backendBase}/${slug}`;
         shortLink.textContent = shortUrl;
         shortLink.href = shortUrl;
-        
+
         // Update stats
         linksCount++;
         localStorage.setItem("shortenedLinksCount", linksCount.toString());
@@ -846,7 +846,7 @@
     // Copy functionality
     copyBtn.addEventListener("click", async () => {
       const url = shortLink.textContent;
-      
+
       try {
         await navigator.clipboard.writeText(url);
         showCopySuccess();
@@ -905,7 +905,7 @@
     function showCopySuccess() {
       copyBtn.classList.add("copied");
       copyBtn.innerHTML = '<span>✓</span><span>Скопировано!</span>';
-      
+
       setTimeout(() => {
         copyBtn.classList.remove("copied");
         copyBtn.innerHTML = '<span>📋</span><span>Копировать</span>';
@@ -914,7 +914,7 @@
 
     function showToast() {
       toast.classList.add("show");
-      
+
       setTimeout(() => {
         toast.classList.remove("show");
       }, 2500);
