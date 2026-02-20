@@ -69,9 +69,9 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
 # Initialize FastAPI app
 app = FastAPI(
     lifespan=lifespan,
-    title=settings.app.app_name,
+    title=settings.app_name,
     description="High-performance URL shortener with analytics and custom slugs",
-    version=settings.app.app_version,
+    version=settings.app_version,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -147,7 +147,7 @@ async def general_exception_handler(
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.app.allowed_origins,
+    allow_origins=settings.allowed_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -234,7 +234,7 @@ async def health_check(
 
     return HealthResponse(
         status="healthy" if db_status == "connected" else "unhealthy",
-        version=settings.app.app_version,
+        version=settings.app_version,
         database=db_status,
     )
 
@@ -250,7 +250,7 @@ API_V1_PREFIX = "/api/v1"
     summary="Create short URL",
     description="Create a shortened URL with optional custom slug and expiration",
 )
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def create_short_url(
     request: Request,
     body: ShortenUrlRequest,
@@ -305,7 +305,7 @@ async def create_short_url(
     summary="List all URLs",
     description="Get paginated list of all shortened URLs",
 )
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def list_all_urls(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -332,7 +332,7 @@ async def list_all_urls(
     summary="Get URL info",
     description="Get detailed information about a shortened URL",
 )
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def get_url_details(
     request: Request,
     slug: str,
@@ -350,7 +350,7 @@ async def get_url_details(
     summary="Delete URL",
     description="Delete a shortened URL",
 )
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def delete_short_url(
     request: Request,
     slug: str,
@@ -376,7 +376,7 @@ async def delete_short_url(
     summary="Get click statistics",
     description="Get click statistics for a shortened URL",
 )
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def get_url_stats(
     request: Request,
     slug: str,
@@ -395,7 +395,7 @@ async def get_url_stats(
 
 
 @app.post("/short_url", response_model=ShortenUrlResponse, tags=["Legacy"])
-@limiter.limit(f"{settings.app.rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit_per_minute}/minute")
 async def legacy_create_short_url(
     request: Request,
     body: ShortenUrlRequest,

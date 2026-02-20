@@ -18,8 +18,8 @@ def create_limiter(settings: Settings) -> Limiter:
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=[
-            f"{settings.app.rate_limit_per_hour}/hour",
-            f"{settings.app.rate_limit_per_minute}/minute",
+            f"{settings.rate_limit_per_hour}/hour",
+            f"{settings.rate_limit_per_minute}/minute",
         ],
         storage_uri="memory://",
     )

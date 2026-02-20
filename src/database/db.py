@@ -19,11 +19,11 @@ def create_engine_and_session(
         Tuple of (engine, async_sessionmaker)
     """
     engine = create_async_engine(
-        url=settings.database.database_url,
+        url=settings.database_url,
         pool_size=20,
         max_overflow=30,
         pool_pre_ping=True,  # Enable connection health checks
-        echo=settings.database.sql_echo,
+        echo=settings.sql_echo,
     )
 
     async_session_maker = async_sessionmaker(

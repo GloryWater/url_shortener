@@ -29,7 +29,7 @@ RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 
-EXPOSE 8000
+EXPOSE 8001
 
 # Запуск напрямую через uvicorn (uvrun уже не обязателен благодаря PATH)
-CMD
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8001"]

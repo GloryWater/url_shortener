@@ -6,39 +6,14 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DatabaseSettings(BaseSettings):
-    """Database connection settings."""
-
-    model_config = SettingsConfigDict(env_prefix="POSTGRES_")
-
-    user: str = Field(default="postgres", description="Database user")
-    password: str = Field(default="postgres", description="Database password")
-    host: str = Field(default="localhost", description="Database host")
-    port: int = Field(default=5432, description="Database port")
-    db_name: str = Field(default="postgres", description="Database name")
-    sql_echo: bool = Field(default=False, description="Enable SQL query logging")
-
-    @property
-    def database_url(self) -> str:
-        """Get async PostgreSQL connection URL."""
-        return (
-            f"postgresql+asyncpg://{self.user}:{self.password}"
-            f"@{self.host}:{self.port}/{self.db_name}"
-        )
-
-    @property
-    def sync_database_url(self) -> str:
-        """Get sync PostgreSQL connection URL (for Alembic)."""
-        return (
-            f"postgresql://{self.user}:{self.password}"
-            f"@{self.host}:{self.port}/{self.db_name}"
-        )
-
-
-class AppSettings(BaseSettings):
+class Settings(BaseSettings):
     """Application settings."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # Ignore extra fields from .env
+    )
 
     # Application
     app_name: str = Field(default="URL Shortener", description="Application name")
@@ -49,10 +24,18 @@ class AppSettings(BaseSettings):
     host: str = Field(default="0.0.0.0", description="Server host")
     port: int = Field(default=8001, description="Server port")
 
+    # Database - PostgreSQL
+    postgres_user: str = Field(default="postgres", description="Database user")
+    postgres_password: str = Field(default="postgres", description="Database password")
+    postgres_host: str = Field(default="localhost", description="Database host")
+    postgres_port: int = Field(default=5432, description="Database port")
+    postgres_db: str = Field(default="postgres", description="Database name")
+    sql_echo: bool = Field(default=False, description="Enable SQL query logging")
+
     # CORS
-    allowed_origins: list[str] = Field(
-        default=["http://localhost:5500"],
-        description="Allowed CORS origins",
+    allowed_origins: str = Field(
+        default="http://localhost:5500",
+        description="Allowed CORS origins (comma-separated)",
     )
 
     # Rate limiting
@@ -80,11 +63,9 @@ class AppSettings(BaseSettings):
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
-    def parse_allowed_origins(cls, v: str | list[str]) -> list[str]:
-        """Parse comma-separated origins string to list."""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+    def parse_allowed_origins(cls, v: str) -> str:
+        """Ensure allowed_origins is a string."""
+        return str(v) if v else "http://localhost:5500"
 
     @field_validator("slug_length")
     @classmethod
@@ -94,24 +75,21 @@ class AppSettings(BaseSettings):
             raise ValueError("Slug length must be between 4 and 12")
         return v
 
-
-class Settings(BaseSettings):
-    """Main settings class combining all configurations."""
-
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-
-    app: AppSettings = Field(default_factory=AppSettings)
-    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
-
     @property
     def database_url(self) -> str:
-        """Get database URL."""
-        return self.database.database_url
+        """Get async PostgreSQL connection URL."""
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
     @property
     def sync_database_url(self) -> str:
-        """Get sync database URL."""
-        return self.database.sync_database_url
+        """Get sync PostgreSQL connection URL (for Alembic)."""
+        return (
+            f"postgresql://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
 
 @lru_cache

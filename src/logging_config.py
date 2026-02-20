@@ -78,14 +78,14 @@ def setup_logging(settings: Settings, is_production: bool = False) -> None:
         is_production: If True, use JSON format. Otherwise, use colored console output.
     """
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG if settings.app.debug else logging.INFO)
+    root_logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
     # Remove existing handlers
     root_logger.handlers.clear()
 
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG if settings.app.debug else logging.INFO)
+    console_handler.setLevel(logging.DEBUG if settings.debug else logging.INFO)
 
     if is_production:
         # JSON format for production
@@ -106,7 +106,7 @@ def setup_logging(settings: Settings, is_production: bool = False) -> None:
     # Set specific log levels for noisy libraries
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(
-        logging.DEBUG if settings.database.sql_echo else logging.WARNING
+        logging.DEBUG if settings.sql_echo else logging.WARNING
     )
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
