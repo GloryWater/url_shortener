@@ -161,20 +161,20 @@ jobs:
           script: |
             # Login to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
+
             # Pull new image
             docker pull ghcr.io/${{ github.repository }}/url-shortener:latest
-            
+
             # Stop and remove old container
             docker stop url-shortener || true
             docker rm url-shortener || true
-            
+
             # Run new container
             docker run -d \
               --name url-shortener \
               --restart unless-stopped \
               -p 8000:8000 \
               ghcr.io/${{ github.repository }}/url-shortener:latest
-            
+
             # Cleanup old images
             docker image prune -af --filter "until=24h"
