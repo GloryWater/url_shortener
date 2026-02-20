@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.database.crud import get_long_url_by_slug_from_database
 from src.exceptions import NoLongUrlFoundError
 from src.shortener import generate_short_url as _generate_short_url

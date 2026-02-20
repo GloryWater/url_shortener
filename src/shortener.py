@@ -1,11 +1,13 @@
 import string
+from collections.abc import Callable
 from secrets import choice
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from src.exceptions import SlugAlreadyExistsError
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine
+
     from sqlalchemy.ext.asyncio import AsyncSession
 
 ALPHABET: str = string.ascii_letters + string.digits

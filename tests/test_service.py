@@ -1,7 +1,6 @@
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.models import ShortURL
 from src.exceptions import NoLongUrlFoundError
 from src.service import generate_short_url, get_url_by_slug

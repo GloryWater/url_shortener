@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.database.db import engine, new_session
 from src.database.models import Base
 from src.exceptions import NoLongUrlFoundError, SlugAlreadyExistsError
