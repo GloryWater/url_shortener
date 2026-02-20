@@ -2,26 +2,34 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Установка uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Установка uv и uvx
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Копирование файлов проекта
-COPY pyproject.toml uv.lock* ./
+# Настройки uv для Docker
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Установка зависимостей
-RUN uv sync --frozen --no-dev
+# Копируем ТОЛЬКО файлы зависимостей
+COPY pyproject.toml uv.lock ./
 
-# Копирование исходного кода
+# Устанавливаем зависимости (без самого кода проекта)
+# Это создаст слой, который будет кэшироваться, пока не изменятся зависимости
+RUN uv sync --frozen --no-dev --no-install-project
+
+# Теперь копируем остальной код
 COPY src/ ./src/
 COPY index.html ./
 
-# Переменные окружения
-ENV PYTHONPATH=/app
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Устанавливаем сам проект (если он прописан в pyproject.toml)
+RUN uv sync --frozen --no-dev
 
-# Экспортируемый порт
+# Чтобы не писать "uv run" при старте, добавляем .venv в PATH
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app"
+
 EXPOSE 8000
 
-# Запуск приложения
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Запуск напрямую через uvicorn (uvrun уже не обязателен благодаря PATH)
+CMD
