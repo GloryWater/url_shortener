@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.14.0",
     "arq>=0.26.3",
     "asyncpg>=0.30.0",
+    "email-validator>=2.2.0",
     "fastapi>=0.121.1",
     "geoip2>=5.0.0",
     "greenlet>=3.2.4",
