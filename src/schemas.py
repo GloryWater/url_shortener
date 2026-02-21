@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class ShortenUrlRequest(BaseModel):
-    """Request schema for creating a short URL."""
+    """Short URL creation request schema."""
 
     long_url: HttpUrl = Field(
         ...,
@@ -33,7 +33,7 @@ class ShortenUrlRequest(BaseModel):
 
 
 class DeleteUrlRequest(BaseModel):
-    """Request schema for deleting a short URL (for API consistency)."""
+    """Short URL deletion request schema (for API consistency, though DELETE uses path params)."""
 
     pass
 
@@ -44,7 +44,7 @@ class DeleteUrlRequest(BaseModel):
 
 
 class ShortenUrlResponse(BaseModel):
-    """Response schema for creating a short URL."""
+    """Short URL creation response schema."""
 
     data: str = Field(..., description="Generated or custom slug")
     short_url: str = Field(..., description="Full short URL")
@@ -71,7 +71,7 @@ class ShortenUrlResponse(BaseModel):
 
 
 class UrlInfoResponse(BaseModel):
-    """Response schema with detailed URL information."""
+    """Detailed URL information response schema."""
 
     slug: str = Field(..., description="Short URL slug")
     long_url: str = Field(..., description="Original long URL")
@@ -100,7 +100,7 @@ class UrlInfoResponse(BaseModel):
 
 
 class UrlListResponse(BaseModel):
-    """Response schema for paginated URL list."""
+    """Paginated URL list response schema."""
 
     items: list[UrlInfoResponse] = Field(..., description="List of URLs")
     total: int = Field(..., description="Total number of URLs")
@@ -124,7 +124,7 @@ class UrlListResponse(BaseModel):
 
 
 class ClickStatsResponse(BaseModel):
-    """Response schema for click statistics."""
+    """Click statistics response schema."""
 
     total_clicks: int = Field(..., description="Total number of clicks")
     last_click: datetime | None = Field(
@@ -147,7 +147,7 @@ class ClickStatsResponse(BaseModel):
 
 
 class DeleteResponse(BaseModel):
-    """Response schema for deleting a URL."""
+    """URL deletion response schema."""
 
     success: bool = Field(..., description="Whether deletion was successful")
     message: str = Field(..., description="Status message")
@@ -170,7 +170,7 @@ class DeleteResponse(BaseModel):
 
 
 class ErrorResponse(BaseModel):
-    """Response schema for errors."""
+    """Error response schema."""
 
     detail: str = Field(..., description="Error description")
 
@@ -185,7 +185,7 @@ class ErrorResponse(BaseModel):
 
 
 class ValidationErrorDetail(BaseModel):
-    """Validation error detail."""
+    """Validation error details."""
 
     loc: list[str | int] = Field(..., description="Location of the error")
     msg: str = Field(..., description="Error message")
@@ -193,7 +193,7 @@ class ValidationErrorDetail(BaseModel):
 
 
 class ValidationErrorResponse(BaseModel):
-    """Response schema for validation errors."""
+    """Validation error response schema."""
 
     detail: list[ValidationErrorDetail] = Field(
         ...,
@@ -207,7 +207,7 @@ class ValidationErrorResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Response schema for health check endpoint."""
+    """Health check endpoint response schema."""
 
     status: str = Field(..., description="Health status")
     version: str = Field(..., description="Application version")
@@ -218,7 +218,7 @@ class HealthResponse(BaseModel):
             "examples": [
                 {
                     "status": "healthy",
-                    "version": "0.2.0",
+                    "version": "0.3.0",
                     "database": "connected",
                 }
             ]

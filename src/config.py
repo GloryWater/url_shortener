@@ -1,6 +1,7 @@
 """Application configuration using pydantic-settings."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,8 +18,12 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = Field(default="URL Shortener", description="Application name")
-    app_version: str = Field(default="0.2.0", description="Application version")
+    app_version: str = Field(default="0.3.0", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
+    environment: Literal["development", "production"] = Field(
+        default="development",
+        description="Environment mode",
+    )
 
     # Server
     host: str = Field(default="0.0.0.0", description="Server host")
@@ -31,6 +36,13 @@ class Settings(BaseSettings):
     postgres_port: int = Field(default=5432, description="Database port")
     postgres_db: str = Field(default="postgres", description="Database name")
     sql_echo: bool = Field(default=False, description="Enable SQL query logging")
+
+    # Redis
+    redis_host: str = Field(default="localhost", description="Redis host")
+    redis_port: int = Field(default=6379, description="Redis port")
+    redis_db: int = Field(default=0, description="Redis database index (0-15)")
+    redis_password: str | None = Field(default=None, description="Redis password")
+    redis_ttl: int = Field(default=86400, description="Redis TTL in seconds (24h)")
 
     # CORS
     allowed_origins: str = Field(
@@ -58,7 +70,18 @@ class Settings(BaseSettings):
     # Security
     secret_key: str = Field(
         default="change-me-in-production",
-        description="Secret key for security features",
+        description="Secret key for JWT signing",
+    )
+    jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    jwt_access_token_expire_minutes: int = Field(
+        default=30,
+        description="JWT token expiration in minutes",
+    )
+
+    # GeoIP
+    geoip_db_path: str | None = Field(
+        default=None,
+        description="Path to GeoIP2 database file",
     )
 
     @field_validator("allowed_origins", mode="before")
@@ -70,14 +93,14 @@ class Settings(BaseSettings):
     @field_validator("slug_length")
     @classmethod
     def validate_slug_length(cls, v: int) -> int:
-        """Validate slug length is within acceptable range."""
+        """Validate that slug length is in valid range."""
         if not 4 <= v <= 12:
             raise ValueError("Slug length must be between 4 and 12")
         return v
 
     @property
     def database_url(self) -> str:
-        """Get async PostgreSQL connection URL."""
+        """Get async PostgreSQL connection."""
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
@@ -85,11 +108,17 @@ class Settings(BaseSettings):
 
     @property
     def sync_database_url(self) -> str:
-        """Get sync PostgreSQL connection URL (for Alembic)."""
+        """Get sync PostgreSQL connection (for Alembic)."""
         return (
             f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def redis_url(self) -> str:
+        """Get Redis connection."""
+        password_part = f":{self.redis_password}@" if self.redis_password else ""
+        return f"redis://{password_part}{self.redis_host}:{self.redis_port}/{self.redis_db}"
 
 
 @lru_cache

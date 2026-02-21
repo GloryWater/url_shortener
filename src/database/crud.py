@@ -1,4 +1,4 @@
-"""Database CRUD operations for URL shortener."""
+"""Database CRUD operations for URL shortening."""
 
 from datetime import datetime
 from typing import Any
@@ -24,8 +24,8 @@ async def add_slug_to_database(
         slug: Short URL slug
         long_url: Original long URL
         session: Database session
-        custom_slug: Whether the slug was custom-defined by user
-        expires_at: Optional expiration datetime
+        custom_slug: Whether the slug was user-provided
+        expires_at: Optional expiration date
 
     Returns:
         Created ShortURL instance
@@ -71,7 +71,7 @@ async def get_long_url_by_slug(
     slug: str,
     session: AsyncSession,
 ) -> str | None:
-    """Get long URL by slug (convenience method).
+    """Get long URL by slug (helper method).
 
     Args:
         slug: Short URL slug
@@ -90,7 +90,7 @@ async def delete_slug_from_database(
     slug: str,
     session: AsyncSession,
 ) -> bool:
-    """Delete a short URL by slug.
+    """Delete short URL by slug.
 
     Args:
         slug: Short URL slug to delete
@@ -121,7 +121,7 @@ async def get_all_urls_paginated(
     Args:
         session: Database session
         page: Page number (1-indexed)
-        limit: Items per page
+        limit: Number of items per page
 
     Returns:
         Tuple of (list of ShortURL records, total count)
@@ -148,14 +148,14 @@ async def get_url_by_long_url(
     long_url: str,
     session: AsyncSession,
 ) -> ShortURL | None:
-    """Check if a long URL already has a short URL.
+    """Check if long URL already has a short URL.
 
     Args:
         long_url: Original long URL
         session: Database session
 
     Returns:
-        ShortURL instance if exists, None otherwise
+        ShortURL instance if exists, otherwise None
     """
     query = select(ShortURL).filter(ShortURL.long_url == long_url)
     result = await session.execute(query)
@@ -186,6 +186,52 @@ async def record_click(
         ip_address=ip_address,
         user_agent=user_agent,
         referer=referer,
+    )
+    session.add(click)
+    await session.commit()
+    await session.refresh(click)
+    return click
+
+
+async def create_click_enriched(
+    slug: str,
+    session: AsyncSession,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+    referer: str | None = None,
+    country: str | None = None,
+    city: str | None = None,
+    browser: str | None = None,
+    os: str | None = None,
+    device: str | None = None,
+) -> Click:
+    """Create an enriched click record.
+
+    Args:
+        slug: Short URL slug that was clicked
+        session: Database session
+        ip_address: Client IP address
+        user_agent: Client user agent string
+        referer: Referer header value
+        country: Country from GeoIP
+        city: City from GeoIP
+        browser: Browser from user agent parsing
+        os: Operating system from user agent parsing
+        device: Device type from user agent parsing
+
+    Returns:
+        Created Click instance
+    """
+    click = Click(
+        slug=slug,
+        ip_address=ip_address,
+        user_agent=user_agent,
+        referer=referer,
+        country=country,
+        city=city,
+        browser=browser,
+        os=os,
+        device=device,
     )
     session.add(click)
     await session.commit()

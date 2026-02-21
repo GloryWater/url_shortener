@@ -8,7 +8,7 @@ class ShortenerBaseError(Exception):
 
 
 class NoLongUrlFoundError(ShortenerBaseError):
-    """Raised when a short URL is not found or has expired."""
+    """Raised when short URL is not found or expired."""
 
     pass
 

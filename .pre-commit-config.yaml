@@ -7,6 +7,9 @@
 #
 # Run against all files:
 #   uv run pre-commit run --all-files
+#
+# Run manually (for pytest):
+#   uv run pre-commit run pytest --hook-stage manual
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -52,4 +55,4 @@ repos:
         pass_filenames: false
         always_run: true
         types: [python]
-        stages: [manual]  # Only run manually, not on every commit
+        stages: [manual]  # Run manually with: pre-commit run pytest --hook-stage manual

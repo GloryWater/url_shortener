@@ -1,16 +1,21 @@
 """FastAPI application entry point."""
 
+import logging
 import os
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Annotated
 
+import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
+from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.router import router as auth_router
+from src.cache import cache_url, close_redis_client, get_cached_url, get_redis_client
 from src.config import get_settings
 from src.database.db import create_engine_and_session
 from src.database.models import Base
@@ -37,8 +42,9 @@ from src.service import (
     get_url_by_slug,
     get_url_info,
     list_urls,
-    record_click,
 )
+
+logger = logging.getLogger(__name__)
 
 # Initialize settings
 settings = get_settings()
@@ -54,30 +60,45 @@ engine, async_session_maker = create_engine_and_session(settings)
 # Create rate limiter
 limiter = create_limiter(settings)
 
+# Worker instance
+_worker = None
+
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler."""
     # Startup: create database tables
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+
+    # Setup Prometheus metrics
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
     yield
-    # Shutdown: cleanup if needed
+
+    # Shutdown: cleanup
     await engine.dispose()
+    await close_redis_client()
+
+    if _worker:
+        _worker.close()
 
 
-# Initialize FastAPI app
+# Initialize FastAPI application
 app = FastAPI(
     lifespan=lifespan,
     title=settings.app_name,
-    description="High-performance URL shortener with analytics and custom slugs",
+    description="High-performance URL shortener with analytics, caching, and authentication",
     version=settings.app_version,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
 
-# Add rate limiter to app
+# Include routers
+app.include_router(auth_router, prefix="/api/v1")
+
+# Add rate limiter to application
 app.state.limiter = limiter
 
 
@@ -215,7 +236,7 @@ def get_referer(request: Request) -> str | None:
 
 @app.get("/", tags=["Root"])
 async def read_root() -> FileResponse:
-    """Serve the frontend HTML page."""
+    """Serve the main frontend HTML page (index.html)."""
     return FileResponse("index.html")
 
 
@@ -443,20 +464,72 @@ async def redirect_to_url(
     slug: str,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> RedirectResponse:
-    """Redirect to the original URL and record analytics."""
+    """Redirect to the original URL and queue click analytics.
+
+    Uses the cache-aside pattern (check cache first, then database):
+    1. Check Redis cache for URL
+    2. If cache hit: return URL and queue click event
+    3. If cache miss: query PostgreSQL, cache result, queue click event
+    4. Graceful degradation: if Redis fails, fallback to PostgreSQL only
+    """
+    long_url = None
+
+    # Try to get from cache
     try:
-        long_url = await get_url_by_slug(slug, session)
-    except NoLongUrlFoundError:
+        long_url = await get_cached_url(slug, settings)
+        if long_url:
+            # Cache hit - increment metrics
+            from src.cache import increment_cache_hits
+
+            await increment_cache_hits(settings)
+    except redis.RedisError as e:
+        logger.warning(f"Redis error on cache read, falling back to DB: {e}")
+
+    # Cache miss or Redis error - query database
+    if not long_url:
+        try:
+            # Cache miss - increment metrics
+            from src.cache import increment_cache_misses
+
+            await increment_cache_misses(settings)
+
+            long_url = await get_url_by_slug(slug, session)
+
+            # Cache the result for future requests
+            if long_url:
+                await cache_url(slug, long_url, settings)
+        except Exception as e:
+            logger.error(f"Error getting URL from database: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="URL not found or expired",
+            )
+
+    if not long_url:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="URL not found or expired",
         )
 
-    # Record click analytics (non-blocking)
+    # Get client info for analytics
     ip_address = get_client_ip(request)
     user_agent = get_user_agent(request)
     referer = get_referer(request)
 
-    await record_click(slug, session, ip_address, user_agent, referer)
+    # Queue click event for async processing (non-blocking)
+    # Graceful degradation: if queue fails, still redirect the user
+    try:
+        # Get Redis connection for queue
+        redis_pool = await get_redis_client(settings)
+        await redis_pool.enqueue_job(  # type: ignore[attr-defined]
+            "process_click_event",
+            slug=slug,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            referer=referer,
+        )
+    except Exception as e:
+        # Log error but don't fail the redirect
+        logger.error(f"Failed to queue click event: {e}")
 
     return RedirectResponse(url=long_url, status_code=status.HTTP_302_FOUND)

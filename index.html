@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d0d0d" />
-  <title>URL Shortener | 2026</title>
+  <title>URL Shortener v3.0 | SaaS Platform</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
 
   <style>
     :root {
@@ -86,8 +89,13 @@
     }
 
     @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     /* Grid Pattern */
@@ -142,10 +150,23 @@
     }
 
     @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(30px, -30px) scale(1.05); }
-      50% { transform: translate(-20px, 20px) scale(0.95); }
-      75% { transform: translate(20px, 30px) scale(1.02); }
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      25% {
+        transform: translate(30px, -30px) scale(1.05);
+      }
+
+      50% {
+        transform: translate(-20px, 20px) scale(0.95);
+      }
+
+      75% {
+        transform: translate(20px, 30px) scale(1.02);
+      }
     }
 
     /* Main Container */
@@ -171,6 +192,7 @@
         opacity: 0;
         transform: translateY(-30px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -223,8 +245,15 @@
     }
 
     @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     .subtitle {
@@ -232,6 +261,31 @@
       color: var(--text-secondary);
       max-width: 500px;
       margin: 0 auto;
+    }
+
+    /* Auth Links */
+    .auth-links {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
+
+    .auth-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+    }
+
+    .auth-link:hover {
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+      background: var(--bg-glass);
     }
 
     /* Main Card */
@@ -262,8 +316,17 @@
     }
 
     @keyframes shimmer {
-      0%, 100% { opacity: 0.5; transform: translateX(-100%); }
-      50% { opacity: 1; transform: translateX(100%); }
+
+      0%,
+      100% {
+        opacity: 0.5;
+        transform: translateX(-100%);
+      }
+
+      50% {
+        opacity: 1;
+        transform: translateX(100%);
+      }
     }
 
     @keyframes scaleUp {
@@ -271,6 +334,7 @@
         opacity: 0;
         transform: scale(0.95);
       }
+
       to {
         opacity: 1;
         transform: scale(1);
@@ -304,7 +368,9 @@
       transition: color 0.3s ease;
     }
 
-    input[type="url"] {
+    input[type="url"],
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       padding: 1.125rem 1.25rem 1.125rem 3.25rem;
       background: var(--bg-glass);
@@ -317,21 +383,39 @@
       outline: none;
     }
 
-    input[type="url"]::placeholder {
+    input[type="url"]:placeholder-shown+.input-icon,
+    input[type="email"]:placeholder-shown+.input-icon,
+    input[type="password"]:placeholder-shown+.input-icon {
       color: var(--text-muted);
     }
 
-    input[type="url"]:hover {
+    input[type="url"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder {
+      color: var(--text-muted);
+    }
+
+    input[type="url"]:hover,
+    input[type="email"]:hover,
+    input[type="password"]:hover {
       border-color: rgba(255, 255, 255, 0.15);
     }
 
-    input[type="url"]:focus {
+    input[type="url"]:focus,
+    input[type="email"]:focus,
+    input[type="password"]:focus {
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1), var(--glow-primary);
     }
 
-    input[type="url"]:focus + .input-icon {
+    input[type="url"]:focus+.input-icon,
+    input[type="email"]:focus+.input-icon,
+    input[type="password"]:focus+.input-icon {
       color: var(--accent-primary);
+    }
+
+    input[aria-invalid="true"] {
+      border-color: var(--accent-tertiary);
     }
 
     /* Button */
@@ -414,6 +498,7 @@
         opacity: 0;
         transform: translateY(20px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -498,9 +583,21 @@
     }
 
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-5px); }
-      40%, 80% { transform: translateX(5px); }
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      20%,
+      60% {
+        transform: translateX(-5px);
+      }
+
+      40%,
+      80% {
+        transform: translateX(5px);
+      }
     }
 
     /* Loading */
@@ -523,13 +620,31 @@
       animation: bounce 1.4s ease-in-out infinite;
     }
 
-    .loading-dots span:nth-child(1) { animation-delay: 0s; }
-    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    .loading-dots span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
 
     @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-      40% { transform: scale(1); opacity: 1; }
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+        opacity: 0.5;
+      }
+
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     /* Stats */
@@ -552,8 +667,13 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
 
     .stat-value {
@@ -633,6 +753,7 @@
       opacity: 0;
       transition: all 0.4s var(--ease-elastic);
       z-index: 1000;
+      min-width: 300px;
     }
 
     .toast.show {
@@ -643,22 +764,73 @@
     .toast-icon {
       width: 24px;
       height: 24px;
-      background: var(--accent-primary);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--bg-primary);
       font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+
+    .toast-icon.success {
+      background: var(--accent-primary);
+    }
+
+    .toast-icon.error {
+      background: var(--accent-tertiary);
+    }
+
+    .toast-icon.warning {
+      background: var(--accent-tertiary);
     }
 
     .toast-message {
       color: var(--text-primary);
       font-size: 0.875rem;
       font-weight: 500;
+      flex: 1;
+    }
+
+    /* User info */
+    .user-info {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-glass);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .user-info.show {
+      display: flex;
+    }
+
+    .user-email {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .logout-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      border-color: var(--accent-tertiary);
+      color: var(--accent-tertiary);
     }
   </style>
 </head>
+
 <body>
   <!-- Background Effects -->
   <div class="bg-gradient"></div>
@@ -672,49 +844,58 @@
     <header class="header">
       <div class="logo">
         <div class="logo-icon">⚡</div>
-        <span class="logo-text">ShortURL</span>
+        <span class="logo-text">ShortURL v3.0</span>
       </div>
       <h1>
-        Сокращай ссылки<br />
-        <span class="gradient-text">со скоростью света</span>
+        Shorten Links<br />
+        <span class="gradient-text">at the Speed of Light</span>
       </h1>
       <p class="subtitle">
-        Минималистичный сервис для создания коротких и запоминающихся ссылок
+        High-performance SaaS platform with caching, analytics, and authentication
       </p>
+
+      <div class="auth-links">
+        <a href="#" class="auth-link" id="login-link">Login</a>
+        <a href="#" class="auth-link" id="register-link">Register</a>
+      </div>
+
+      <div class="user-info" id="user-info">
+        <span class="user-email" id="user-email"></span>
+        <button class="logout-btn" id="logout-btn">Logout</button>
+      </div>
     </header>
 
     <!-- Main Card -->
     <div class="card">
       <form id="short-form">
         <div class="form-group">
-          <label for="long-url">Вставьте вашу ссылку</label>
+          <label for="long-url">Paste Your Link</label>
           <div class="input-wrapper">
             <span class="input-icon">🔗</span>
-            <input
-              type="url"
-              id="long-url"
-              placeholder="https://example.com/very/long/url/that/needs/shortening"
-              required
-              autocomplete="off"
-            />
+            <input type="url" id="long-url" placeholder="https://example.com/very/long/url/that/needs/shortening"
+              required autocomplete="off" aria-label="Long URL to shorten" aria-describedby="url-help" />
           </div>
+          <small id="url-help"
+            style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; display: block;">
+            Enter a URL starting with http:// or https://
+          </small>
         </div>
 
         <button type="submit" class="btn" id="submit-btn">
-          <span class="btn-text">Сократить ссылку</span>
+          <span class="btn-text">Shorten URL</span>
           <span class="btn-icon">→</span>
         </button>
       </form>
 
-      <div class="error" id="error"></div>
+      <div class="error" id="error" role="alert" aria-live="assertive"></div>
 
       <div class="result" id="result">
-        <div class="result-label">✨ Готово! Ваша ссылка:</div>
+        <div class="result-label">✨ Done! Your short URL:</div>
         <div class="result-link-wrapper">
           <a class="result-link" id="short-link" target="_blank" rel="noopener noreferrer"></a>
-          <button class="copy-btn" id="copy-btn">
+          <button class="copy-btn" id="copy-btn" aria-label="Copy link">
             <span>📋</span>
-            <span>Копировать</span>
+            <span>Copy</span>
           </button>
         </div>
       </div>
@@ -724,22 +905,22 @@
     <div class="stats">
       <div class="stat">
         <div class="stat-value" id="stat-links">0</div>
-        <div class="stat-label">Ссылок создано</div>
+        <div class="stat-label">Links Created</div>
       </div>
       <div class="stat">
-        <div class="stat-value">6</div>
-        <div class="stat-label">Символов в slug</div>
+        <div class="stat-value">&lt;50ms</div>
+        <div class="stat-label">Redirect Time</div>
       </div>
       <div class="stat">
         <div class="stat-value">∞</div>
-        <div class="stat-label">Скорость работы</div>
+        <div class="stat-label">Scalability</div>
       </div>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
       <p>
-        Made with ❤️ using FastAPI + PostgreSQL<br />
+        Made with ❤️ using FastAPI + PostgreSQL + Redis<br />
         <a href="https://github.com/GloryWater/url_shortener" target="_blank" rel="noopener noreferrer">
           View on GitHub →
         </a>
@@ -748,9 +929,9 @@
   </main>
 
   <!-- Toast -->
-  <div class="toast" id="toast">
-    <div class="toast-icon">✓</div>
-    <span class="toast-message">Скопировано в буфер!</span>
+  <div class="toast" id="toast" role="alert" aria-live="polite">
+    <div class="toast-icon" id="toast-icon"></div>
+    <span class="toast-message" id="toast-message"></span>
   </div>
 
   <script>
@@ -764,14 +945,49 @@
     const btnText = submitBtn.querySelector(".btn-text");
     const btnIcon = submitBtn.querySelector(".btn-icon");
     const toast = document.getElementById("toast");
+    const toastIcon = document.getElementById("toast-icon");
+    const toastMessage = document.getElementById("toast-message");
     const statLinks = document.getElementById("stat-links");
+    const userInfo = document.getElementById("user-info");
+    const userEmail = document.getElementById("user-email");
+    const logoutBtn = document.getElementById("logout-btn");
+    const loginLink = document.getElementById("login-link");
+    const registerLink = document.getElementById("register-link");
 
-    // Backend URL - обновите под ваш домен
+    // Backend URL
     const backendBase = window.location.origin;
 
     // Load saved links count
     let linksCount = parseInt(localStorage.getItem("shortenedLinksCount") || "0");
     statLinks.textContent = linksCount;
+
+    // Check for auth token
+    function checkAuth() {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        // Decode JWT to get email (simplified, use proper JWT lib in production)
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userEmail.textContent = payload.email || "User";
+          userInfo.classList.add("show");
+          loginLink.style.display = "none";
+          registerLink.style.display = "none";
+        } catch (e) {
+          localStorage.removeItem("access_token");
+        }
+      }
+    }
+
+    checkAuth();
+
+    // Logout
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("access_token");
+      userInfo.classList.remove("show");
+      loginLink.style.display = "";
+      registerLink.style.display = "";
+      showToast("success", "You have successfully logged out");
+    });
 
     // Animate stat on load
     setTimeout(() => {
@@ -789,7 +1005,7 @@
 
       const longUrl = input.value.trim();
       if (!longUrl) {
-        showError("Пожалуйста, введите ссылку");
+        showError("Please enter a URL");
         return;
       }
 
@@ -797,25 +1013,38 @@
       try {
         new URL(longUrl);
       } catch {
-        showError("Некорректный формат ссылки. Добавьте https://");
+        showError("Invalid URL format. Add https://");
+        input.setAttribute("aria-invalid", "true");
         return;
       }
 
+      input.removeAttribute("aria-invalid");
       setLoading(true);
 
       try {
-        const response = await fetch(`${backendBase}/short_url`, {
+        const token = localStorage.getItem("access_token");
+        const headers = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(`${backendBase}/api/v1/urls`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ long_url: longUrl }),
         });
 
         if (!response.ok) {
-          let detail = "Что-то пошло не так. Попробуйте ещё раз.";
+          let detail = "Something went wrong. Please try again.";
           try {
             const errorData = await response.json();
             detail = errorData?.detail || detail;
-          } catch {}
+
+            // Handle rate limit
+            if (response.status === 429) {
+              detail = "Too many requests. Please wait a moment.";
+            }
+          } catch { }
           throw new Error(detail);
         }
 
@@ -823,7 +1052,7 @@
         const slug = data?.data;
 
         if (!slug) {
-          throw new Error("Сервер не вернул ссылку");
+          throw new Error("Server did not return a short URL");
         }
 
         const shortUrl = `${backendBase}/${slug}`;
@@ -836,8 +1065,11 @@
         statLinks.textContent = linksCount;
 
         showResult();
+        showToast("success", "URL shortened successfully!");
       } catch (err) {
-        showError(err.message || "Произошла ошибка при создании ссылки");
+        const message = err.message || "An error occurred while creating the short URL";
+        showError(message);
+        showToast("error", message);
       } finally {
         setLoading(false);
       }
@@ -850,7 +1082,7 @@
       try {
         await navigator.clipboard.writeText(url);
         showCopySuccess();
-        showToast();
+        showToast("success", "Copied to clipboard!");
       } catch {
         // Fallback for older browsers
         const textarea = document.createElement("textarea");
@@ -860,16 +1092,17 @@
         document.execCommand("copy");
         document.body.removeChild(textarea);
         showCopySuccess();
-        showToast();
+        showToast("success", "Copied to clipboard!");
       }
     });
 
     function setLoading(loading) {
       if (loading) {
         submitBtn.disabled = true;
+        submitBtn.setAttribute("aria-busy", "true");
         btnText.innerHTML = `
           <span class="loading">
-            Создаём
+            Creating
             <span class="loading-dots">
               <span></span>
               <span></span>
@@ -880,7 +1113,8 @@
         btnIcon.textContent = "";
       } else {
         submitBtn.disabled = false;
-        btnText.textContent = "Сократить ссылку";
+        submitBtn.removeAttribute("aria-busy");
+        btnText.textContent = "Shorten URL";
         btnIcon.textContent = "→";
       }
     }
@@ -888,10 +1122,12 @@
     function showError(message) {
       errorBox.textContent = message;
       errorBox.classList.add("show");
+      input.setAttribute("aria-invalid", "true");
     }
 
     function hideError() {
       errorBox.classList.remove("show");
+      input.removeAttribute("aria-invalid");
     }
 
     function showResult() {
@@ -904,20 +1140,25 @@
 
     function showCopySuccess() {
       copyBtn.classList.add("copied");
-      copyBtn.innerHTML = '<span>✓</span><span>Скопировано!</span>';
+      copyBtn.innerHTML = '<span>✓</span><span>Copied!</span>';
 
       setTimeout(() => {
         copyBtn.classList.remove("copied");
-        copyBtn.innerHTML = '<span>📋</span><span>Копировать</span>';
+        copyBtn.innerHTML = '<span>📋</span><span>Copy</span>';
       }, 2000);
     }
 
-    function showToast() {
+    function showToast(type, message) {
+      // Set icon based on type
+      toastIcon.className = "toast-icon " + type;
+      toastIcon.textContent = type === "success" ? "✓" : type === "error" ? "✕" : "!";
+
+      toastMessage.textContent = message;
       toast.classList.add("show");
 
       setTimeout(() => {
         toast.classList.remove("show");
-      }, 2500);
+      }, 3000);
     }
 
     // Add subtle parallax effect on mouse move
@@ -942,6 +1183,18 @@
     input.addEventListener("blur", () => {
       document.querySelector(".card").style.borderColor = "var(--border-subtle)";
     });
+
+    // Auth links (placeholder - implement modals or separate pages)
+    loginLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      showToast("warning", "Login feature in development. Use /api/v1/auth/login");
+    });
+
+    registerLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      showToast("warning", "Registration feature in development. Use /api/v1/auth/register");
+    });
   </script>
 </body>
+
 </html>

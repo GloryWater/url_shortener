@@ -1,21 +1,28 @@
 [project]
 name = "url-shortener-prod"
-version = "0.2.0"
+version = "0.3.0"
 description = "URL Shortener API with FastAPI and PostgreSQL"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "aiosqlite>=0.21.0",
     "alembic>=1.14.0",
+    "arq>=0.26.3",
     "asyncpg>=0.30.0",
     "fastapi>=0.121.1",
+    "geoip2>=5.0.0",
     "greenlet>=3.2.4",
     "httpx>=0.28.1",
+    "passlib[bcrypt]>=1.7.4",
+    "prometheus-fastapi-instrumentator>=7.0.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.7.0",
+    "pyjwt>=2.9.0",
     "python-json-logger>=3.2.0",
+    "redis>=5.2.0",
     "slowapi>=0.1.9",
     "sqlalchemy>=2.0.44",
+    "user-agents>=2.2.0",
     "uvicorn>=0.38.0",
 ]
 
@@ -29,6 +36,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
     "types-aiofiles>=23.2.0",
+    "types-passlib>=1.7.0",
 ]
 
 [tool.black]
@@ -42,7 +50,7 @@ line_length = 88
 multi_line_output = 3
 
 [tool.ruff]
-# Ruff - это новый супер-быстрый инструмент, который заменяет и flake8, и isort
+# Ruff is a new super-fast tool that replaces both flake8 and isort
 line-length = 88
 target-version = "py311"
 src = ["src", "tests"]

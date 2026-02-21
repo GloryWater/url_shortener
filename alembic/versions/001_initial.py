@@ -1,10 +1,8 @@
-"""Initial schema creation
+"""Initial schema creation."""
 
-Revision ID: 001_initial
-Revises:
-Create Date: 2026-02-20
-
-"""
+__revision_id__ = "001_initial"
+__revises__ = None
+__create_date__ = "2026-02-20"
 
 from collections.abc import Sequence
 

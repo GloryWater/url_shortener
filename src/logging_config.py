@@ -75,7 +75,7 @@ def setup_logging(settings: Settings, is_production: bool = False) -> None:
 
     Args:
         settings: Application settings
-        is_production: If True, use JSON format. Otherwise, use colored console output.
+        is_production: If true, use JSON format. Otherwise, use colored console output.
     """
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if settings.debug else logging.INFO)
@@ -112,7 +112,7 @@ def setup_logging(settings: Settings, is_production: bool = False) -> None:
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Get logger instance with the specified name.
+    """Get logger instance with specified name.
 
     Args:
         name: Logger name (usually __name__)

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -10,6 +10,56 @@ class Base(DeclarativeBase):
     """Base class for all models."""
 
     pass
+
+
+class User(Base):
+    """Model for storing user accounts."""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        autoincrement=True,
+    )
+    email: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    hashed_password: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+    is_superuser: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    # Relationship to URLs
+    urls: Mapped[list["ShortURL"]] = relationship(
+        "ShortURL",
+        back_populates="owner",
+        lazy="selectin",
+    )
 
 
 class ShortURL(Base):
@@ -46,6 +96,18 @@ class ShortURL(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+    owner_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Relationship to owner
+    owner: Mapped["User | None"] = relationship(
+        "User",
+        back_populates="urls",
     )
 
     # Relationship to clicks
@@ -100,6 +162,27 @@ class Click(Base):
     )
     referer: Mapped[str | None] = mapped_column(
         String(512),
+        nullable=True,
+    )
+    # Enriched data fields
+    country: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    city: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    browser: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    os: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+    device: Mapped[str | None] = mapped_column(
+        String(100),
         nullable=True,
     )
 

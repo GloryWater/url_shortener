@@ -1,50 +1,50 @@
-# Pre-commit хуки
+# Pre-commit Hooks
 
-## 🚀 Установка
+## 🚀 Installation
 
 ### Windows
 ```bash
-# Запустить скрипт установки
+# Run installation script
 .\scripts\install-pre-commit.bat
 ```
 
 ### Linux/macOS
 ```bash
-# Сделать скрипт исполняемым
+# Make script executable
 chmod +x scripts/install-pre-commit.sh
 
-# Запустить установку
+# Run installation
 ./scripts/install-pre-commit.sh
 ```
 
-### Вручную
+### Manual installation
 ```bash
 uv run pre-commit install
 ```
 
 ---
 
-## 📋 Как это работает
+## 📋 How it Works
 
-После установки pre-commit хуков, **при каждой команде `git commit`** автоматически выполняются следующие проверки:
+After installing pre-commit hooks, **every `git commit` command** automatically runs the following checks:
 
-1. ✅ **Ruff check** - проверка кода на ошибки
-2. ✅ **Ruff format** - форматирование кода
-3. ✅ **MyPy** - проверка типов (только `src/`)
+1. ✅ **Ruff check** - code error checking
+2. ✅ **Ruff format** - code formatting
+3. ✅ **MyPy** - type checking (only `src/`)
 
-Если **любая проверка не проходит**, коммит **отклоняется** и вы видите ошибку.
+If **any check fails**, the commit is **blocked** and you see an error.
 
 ---
 
-## 🔧 Примеры использования
+## 🔧 Usage Examples
 
-### Обычный коммит (с проверками)
+### Normal commit (with checks)
 ```bash
 git add .
 git commit -m "Add new feature"
 ```
 
-Если код не проходит проверки:
+If code doesn't pass checks:
 ```
 ruff.....................................................................Failed
 - hook id: ruff
@@ -53,67 +53,67 @@ ruff.....................................................................Failed
 Found 2 errors (2 fixed, 0 remaining).
 ```
 
-Ruff автоматически исправит ошибки и покажет сообщение. Запустите `git commit` снова.
+Ruff will automatically fix the errors. Please run `git commit` again.
 
-### Коммит без проверок (не рекомендуется!)
+### Commit without checks (not recommended!)
 ```bash
 git commit --no-verify -m "Hotfix"
 ```
 
-⚠️ **Используйте только в экстренных случаях!**
+⚠️ **Use only in emergency cases!**
 
 ---
 
-## 📝 Ручной запуск проверок
+## 📝 Manual Check Execution
 
-### Проверить все файлы
+### Check all files
 ```bash
 uv run pre-commit run --all-files
 ```
 
-### Проверить только измененные файлы
+### Check only modified files
 ```bash
 uv run pre-commit run
 ```
 
-### Удалить pre-commit хуки
+### Uninstall pre-commit hooks
 ```bash
 uv run pre-commit uninstall
 ```
 
 ---
 
-## 🧪 Запуск тестов
+## 🧪 Running Tests
 
-Pre-commit **не запускает тесты автоматически** при каждом коммите (это медленно).
+Pre-commit **does not run tests automatically** on each commit due to performance considerations.
 
-Для запуска тестов используйте:
+To run tests, use:
 
 ```bash
-# Все тесты
+# All tests
 uv run pytest
 
-# Тесты с покрытием
+# Tests with coverage
 uv run pytest --cov=src --cov-fail-under=80
 
-# Подробный вывод
+# Verbose output
 uv run pytest -v
 ```
 
 ---
 
-## 🛠️ Настройка
+## 🛠️ Configuration
 
-Конфигурация находится в `.pre-commit-config.yaml`.
+Configuration is in `.pre-commit-config.yaml`.
 
-### Исключение файлов из проверок
+### Excluding files from checks
 
-Добавьте в начало файла, который нужно исключить:
+Add at the beginning of the file to exclude:
 ```python
 # flake8: noqa
 ```
 
-Или добавьте паттерн в `.pre-commit-config.yaml`:
+Or add pattern to `.pre-commit-config.yaml`:
 ```yaml
 - id: mypy
   exclude: ^tests/
@@ -121,29 +121,29 @@ uv run pytest -v
 
 ---
 
-## ⚠️ Возможные проблемы
+## ⚠️ Troubleshooting
 
 ### "pre-commit: command not found"
-Установите pre-commit:
+Install pre-commit:
 ```bash
 uv pip install pre-commit
 ```
 
-### "mypy has no attribute 'op'"
-Это ошибка в alembic файлах. Добавьте:
+### MyPy error: 'alembic.op' has no attribute
+This is an error in alembic files. Add:
 ```python
 from alembic import op  # type: ignore[attr-defined]
 ```
 
-### Файлы изменяются после коммита
-Ruff format автоматически форматирует код. После первого коммита:
-1. Запустите `git add .`
-2. Запустите `git commit` снова
+### Files modified by pre-commit hooks
+Ruff automatically formats code. After the first commit:
+1. Run `git add .`
+2. Run `git commit` again
 
 ---
 
-## 📚 Полезные ссылки
+## 📚 Useful Links
 
-- [Pre-commit документация](https://pre-commit.com/)
-- [Ruff документация](https://docs.astral.sh/ruff/)
-- [MyPy документация](https://mypy.readthedocs.io/)
+- [Pre-commit documentation](https://pre-commit.com/)
+- [Ruff documentation](https://docs.astral.sh/ruff/)
+- [MyPy documentation](https://mypy.readthedocs.io/)

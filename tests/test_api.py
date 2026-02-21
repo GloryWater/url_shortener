@@ -345,7 +345,7 @@ async def test_url_with_special_characters(ac: AsyncClient) -> None:
 
 async def test_url_with_unicode(ac: AsyncClient) -> None:
     """Test URL with unicode characters."""
-    long_url = "https://example.com/путь/с/юникодом"
+    long_url = "https://example.com/path/with/unicode/unicode/emoji/🎉"
     result = await ac.post("/api/v1/urls", json={"long_url": long_url})
     assert result.status_code == 200
 

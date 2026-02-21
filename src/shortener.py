@@ -22,10 +22,10 @@ CUSTOM_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9]{4,12}$")
 
 
 def generate_random_slug(length: int = SLUG_LENGTH) -> str:
-    """Generate a random alphanumeric slug.
+    """Generate random alphanumeric slug.
 
     Args:
-        length: Length of the slug to generate
+        length: Length of generated slug
 
     Returns:
         Random slug string
@@ -40,7 +40,7 @@ def is_valid_custom_slug(slug: str) -> bool:
         slug: Custom slug to validate
 
     Returns:
-        True if valid, False otherwise
+        True if valid, otherwise False
     """
     return bool(CUSTOM_SLUG_PATTERN.match(slug))
 
@@ -66,21 +66,21 @@ async def generate_short_url(
     expires_at: datetime | None = None,
     add_to_db_func: "Callable[[str, str, AsyncSession, bool, datetime | None], Coroutine[Any, Any, Any]] | None" = None,
 ) -> tuple[str, bool]:
-    """Generate a short URL slug.
+    """Generate short URL slug.
 
     Args:
         long_url: Original long URL
         session: Database session
         custom_slug: Optional custom slug provided by user
         expires_at: Optional expiration datetime
-        add_to_db_func: Optional custom function to add to database
+        add_to_db_func: Optional custom database add function
 
     Returns:
         Tuple of (slug, is_custom)
 
     Raises:
         SlugAlreadyExistsError: If custom slug already exists or
-            unable to generate unique slug after max attempts
+            failed to generate unique slug after maximum attempts
     """
     from src.database.crud import add_slug_to_database
 

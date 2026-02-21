@@ -1,60 +1,60 @@
-# 🚀 Развертывание на сервере (One-Click Deploy)
+# 🚀 Server Deployment (Automated CI/CD)
 
-После настройки CI/CD, развертывание происходит **автоматически** при каждом пуше в ветку `main`.
+After setting up CI/CD, deployment happens **automatically** with every push to the `main` branch.
 
 ---
 
-## 📋 Шаг 1: Подготовка сервера
+## 📋 Step 1: Server Preparation
 
-На вашем сервере должен быть установлен **Docker**:
+Your server must have **Docker** installed:
 
 ```bash
-# Установка Docker (Ubuntu/Debian)
+# Install Docker (Ubuntu/Debian)
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Добавить пользователя в группу docker (чтобы не нужен был sudo)
+# Add user to docker group (so sudo is not needed)
 sudo usermod -aG docker $USER
 ```
 
-> После выполнения команды перелогиньтесь или выполните `newgrp docker`
+> After running the command, relogin or run `newgrp docker`
 
 ---
 
-## 🔑 Шаг 2: Настройка GitHub Secrets
+## 🔑 Step 2: Configure GitHub Secrets
 
-Добавьте следующие **секреты** в репозиторий на GitHub:
+Add the following **secrets** to your GitHub repository:
 
 `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
 
-| Secret | Описание | Пример |
+| Secret | Description | Example |
 |--------|----------|--------|
-| `SERVER_HOST` | IP-адрес или домен сервера | `192.168.1.100` или `example.com` |
-| `SERVER_USERNAME` | Пользователь на сервере | `root` или `deploy` |
-| `SSH_PRIVATE_KEY` | Приватный SSH-ключ для доступа | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `SERVER_HOST` | Server IP address or domain | `192.168.1.100` or `example.com` |
+| `SERVER_USERNAME` | Server username | `root` or `deploy` |
+| `SSH_PRIVATE_KEY` | Private SSH key for access | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
 
-### Как создать SSH-ключ для деплоя
+### How to Create SSH Key for Deployment
 
 ```bash
-# Создать новую пару ключей (без passphrase)
+# Create new key pair (without passphrase)
 ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions_deploy
 
-# Скопировать приватный ключ (для GitHub Secrets)
+# Copy private key (for GitHub Secrets)
 cat ~/.ssh/github_actions_deploy
 
-# Скопировать публичный ключ на сервер
+# Copy public key to server
 ssh-copy-id -i ~/.ssh/github_actions_deploy.pub user@your-server
 ```
 
-> ⚠️ **Важно:** Приватный ключ должен быть в формате OpenSSH (начинается с `-----BEGIN OPENSSH PRIVATE KEY-----`)
+> ⚠️ **Important:** Private key must be in OpenSSH format (starts with `-----BEGIN OPENSSH PRIVATE KEY-----`)
 >
-> 🔒 **Никогда не коммитьте приватные ключи в репозиторий!**
+> 🔒 **Never commit private keys to the repository!**
 
 ---
 
-## 🎯 Шаг 3: Первый деплой
+## 🎯 Step 3: First Deployment
 
-Просто сделайте пуш в ветку `main`:
+Simply push to the `main` branch:
 
 ```bash
 git add .
@@ -62,63 +62,63 @@ git commit -m "Deploy to production"
 git push origin main
 ```
 
-GitHub Actions автоматически:
-1. ✅ Запустит тесты и проверки
-2. 📦 Соберёт Docker-образ
-3. 🚀 Запушит образ в GHCR (GitHub Container Registry)
-4. 🎯 Подключится по SSH к серверу и развернёт контейнер
+GitHub Actions will automatically:
+1. ✅ Run tests and checks
+2. 📦 Build Docker image
+3. 🚀 Push image to GHCR (GitHub Container Registry)
+4. 🎯 Connect to server via SSH and deploy container
 
 ---
 
-## 📊 Мониторинг деплоя
+## 📊 Monitor Deployment
 
-1. Откройте вкладку **Actions** на GitHub
-2. Выберите последний workflow run
-3. Следите за прогрессом job'а `🚀 Deploy to Server`
+1. Open the **Actions** tab on GitHub
+2. Select the latest workflow run
+3. Follow the progress of the `🚀 Deploy to Server` job
 
 ---
 
-## 🔍 Проверка после деплоя
+## 🔍 Post-Deployment Verification
 
-Подключитесь к серверу и проверьте:
+Connect to the server and verify:
 
 ```bash
-# Проверить статус контейнера
+# Check container status
 docker ps | grep url-shortener
 
-# Посмотреть логи
+# View logs
 docker logs url-shortener
 
-# Проверить доступность
+# Check availability
 curl http://localhost:8000
 ```
 
-Сервис будет доступен по адресу: `http://your-server-ip:8000`
+The service will be available at: `http://your-server-ip:8000`
 
 ---
 
-## 🔄 Обновление
+## 🔄 Updates
 
-Для обновления просто сделайте изменения и запушьте в `main`:
+To update, simply make changes and push to `main`:
 
 ```bash
 git push origin main
 ```
 
-CI/CD автоматически обновит контейнер на сервере.
+CI/CD will automatically update the container on the server.
 
 ---
 
-## 🛡️ Опционально: Docker Compose на сервере
+## 🛡️ Optional: Docker Compose on Server
 
-Для более удобного управления создайте на сервере `docker-compose.yaml`:
+For easier management, you can create a `docker-compose.yaml` file on the server:
 
 ```yaml
 version: '3.8'
 
 services:
   url-shortener:
-    image: ghcr.io/glorywater/url_shortener/url-shortener:latest
+    image: ghcr.io/glorywater/url-shortener/url-shortener:latest
     container_name: url-shortener
     restart: unless-stopped
     ports:
@@ -148,7 +148,7 @@ volumes:
   postgres_data:
 ```
 
-Тогда в workflow замените шаг `Run new container` на:
+Then in the workflow, replace the `Run new container` step with:
 
 ```bash
 docker-compose pull
@@ -159,36 +159,36 @@ docker-compose up -d
 
 ## 🐛 Troubleshooting
 
-### Ошибка "unauthorized: authentication required"
+### Error "unauthorized: authentication required"
 
-Убедитесь, что GitHub Token имеет доступ к GHCR. В workflow используется `${{ secrets.GITHUB_TOKEN }}`.
+Make sure the GitHub token has access to GHCR. The workflow uses `${{ secrets.GITHUB_TOKEN }}`.
 
-### Ошибка SSH подключения
+### SSH Connection Error
 
-Проверьте:
-- Правильность `SERVER_HOST` и `SERVER_USERNAME`
-- Что публичный ключ добавлен в `~/.ssh/authorized_keys` на сервере
-- Что SSH-агент разрешает подключение (порт 22 открыт)
+Check:
+- Correctness of `SERVER_HOST` and `SERVER_USERNAME`
+- That the public key is added to `~/.ssh/authorized_keys` on the server
+- That SSH agent allows connection (port 22 is open)
 
-### Контейнер не запускается
+### Container Not Starting
 
-Проверьте логи:
+Check logs:
 ```bash
 docker logs url-shortener
 ```
 
-Убедитесь, что порт 8000 не занят:
+Make sure port 8000 is not busy:
 ```bash
 sudo lsof -i :8000
 ```
 
 ---
 
-## 📝 Changelog деплоя
+## 📝 Deployment Changelog
 
-| Версия | Изменения |
-|--------|-----------|
-| 1.0 | Initial deploy workflow с SSH |
+| Version | Changes |
+|--------|---------|
+| 1.0 | Initial deploy workflow with SSH |
 
 ---
 

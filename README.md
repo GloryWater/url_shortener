@@ -1,197 +1,268 @@
-# ⚡ FastAPI URL Shortener (v2.0)
+# ⚡ FastAPI URL Shortener (v3.0)
 
-Высокопроизводительный сервис сокращения ссылок с современным асинхронным стеком, аналитикой и элегантным фронтендом.
+High-performance SaaS URL shortening service with caching, asynchronous analytics, authentication, and an elegant frontend.
 
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.121+-005571?style=for-the-badge&logo=fastapi)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-52%20passed-green?style=for-the-badge&logo=pytest)
+![Tests](https://img.shields.io/badge/tests-passing-green?style=for-the-badge&logo=pytest)
 ![Coverage](https://img.shields.io/codecov/c/github/GloryWater/url_shortener?style=for-the-badge&logo=codecov)
 ![CI/CD](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/ci-cd.yaml?style=for-the-badge&logo=github-actions)
 
 ---
 
-## 🌟 Особенности v2.0
+## 🌟 Features v3.0
 
-- **Асинхронный backend** на FastAPI + Uvicorn
-- **PostgreSQL 17** с асинхронным драйвером `asyncpg`
-- **SQLAlchemy 2.0** с async session
-- **Валидация данных** через Pydantic v2 + pydantic-settings
-- **Миграции БД** через Alembic
-- **Rate Limiting** для защиты от злоупотреблений
-- **Аналитика переходов** с подсчетом кликов
-- **Кастомные slug** и срок действия ссылок
-- **API версионирование** (`/api/v1/`)
-- **Health check** endpoint
-- **Security headers** middleware
-- **Структурированное логирование** (JSON для production)
-- **Стильный фронтенд** (Vanilla JS + CSS Soft UI)
-- **Покрытие тестами** (52 теста + pytest + httpx)
+### New Features
+- **🔐 User Authentication** - JWT tokens, registration, login
+- **⚡ Redis Caching** - Cache-aside pattern for redirects <50ms
+- **📬 Asynchronous Analytics** - ARQ queue for background click processing
+- **🌍 GeoIP Enrichment** - Country/city detection by IP
+- **📊 Prometheus Metrics** - Performance monitoring
+- **🧹 Auto-cleanup** - CRON job for removing expired URLs
+- **🔒 Graceful Degradation** - Operation during Redis/queue failures
+
+### Architecture Improvements
+- **Stateless API** - Horizontal scaling
+- **Distributed Locks** - Protection against cache stampede
+- **Event-driven Analytics** - Complete decoupling of redirect and analytics
 
 ---
 
-## 🛠️ Технологический стек
+## 🛠️ Technology Stack
 
-| Категория       | Технологии                                      |
+| Category        | Technologies                                    |
 |-----------------|-------------------------------------------------|
 | **Backend**     | FastAPI, Uvicorn                                |
 | **Database**    | PostgreSQL 17, SQLAlchemy 2.0, asyncpg, Alembic |
+| **Cache**       | Redis 7, redis.asyncio                          |
+| **Queue**       | ARQ (Redis-based)                               |
+| **Auth**        | JWT (PyJWT), passlib[bcrypt]                    |
 | **Config**      | pydantic-settings                               |
 | **Testing**     | pytest, pytest-asyncio, pytest-cov, httpx       |
-| **Frontend**    | Vanilla JavaScript, CSS3 (Soft UI)              |
+| **Frontend**    | Vanilla JavaScript, CSS3 with Soft UI design              |
 | **DevOps**      | Docker, Docker Compose, GitHub Actions          |
 | **Security**    | slowapi (rate limiting), security headers       |
 | **Logging**     | python-json-logger                              |
+| **Monitoring**  | prometheus-fastapi-instrumentator               |
+| **Analytics**   | user-agents, geoip2                             |
 
 ---
 
-## 📦 Структура проекта
+## 📦 Project Structure
 
 ```
 url_shortener/
 ├── src/
-│   ├── main.py           # Точка входа API (FastAPI app)
-│   ├── service.py        # Бизнес-логика сервиса
-│   ├── shortener.py      # Генерация slug
-│   ├── schemas.py        # Pydantic схемы (валидация)
-│   ├── exceptions.py     # Кастомные исключения
-│   ├── config.py         # Конфигурация через pydantic-settings
-│   ├── rate_limiter.py   # Rate limiting настройка
-│   ├── logging_config.py # Настройка логирования
+│   ├── main.py                   # API entry point (FastAPI app)
+│   ├── service.py                # Service business logic
+│   ├── shortener.py              # Slug generation
+│   ├── schemas.py                # Pydantic schemas (validation)
+│   ├── exceptions.py             # Custom exceptions
+│   ├── config.py                 # Configuration via pydantic-settings
+│   ├── rate_limiter.py           # Rate limiting configuration
+│   ├── logging_config.py         # Logging configuration
+│   ├── worker.py                 # ARQ worker for background tasks
+│   ├── auth/
+│   │   ├── __init__.py           # Auth package
+│   │   ├── router.py             # Auth endpoints
+│   │   ├── schemas.py            # Auth schemas
+│   │   ├── crud.py               # Auth CRUD operations
+│   │   ├── jwt.py                # JWT utilities
+│   │   └── dependencies.py       # Auth dependencies
+│   ├── cache/
+│   │   ├── __init__.py           # Cache package
+│   │   └── redis_client.py       # Redis client and caching
 │   └── database/
-│       ├── __init__.py   # Database package
-│       ├── models.py     # SQLAlchemy модели (ShortURL, Click)
-│       ├── db.py         # Настройки подключения к БД
-│       └── crud.py       # Операции с БД
+│       ├── __init__.py           # Database package
+│       ├── models.py             # SQLAlchemy models (User, ShortURL, Click)
+│       ├── db.py                 # Database connection settings
+│       └── crud.py               # Database operations
 ├── tests/
-│   ├── test_api.py       # API тесты (28 тестов)
-│   ├── test_service.py   # Service тесты (24 теста)
-│   └── conftest.py       # Фикстуры pytest
+│   ├── test_api.py               # API tests
+│   ├── test_service.py           # Service tests
+│   ├── test_auth.py              # Auth tests
+│   ├── test_cache.py             # Cache tests
+│   └── conftest.py               # pytest fixtures
 ├── alembic/
-│   ├── versions/         # Миграции БД
-│   ├── env.py            # Alembic environment
-│   └── script.py.mako    # Template для миграций
+│   ├── versions/                 # Database migrations
+│   ├── env.py                    # Alembic environment
+│   └── script.py.mako            # Template for migrations
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yaml    # GitHub Actions workflow
-├── .pre-commit-config.yaml  # Pre-commit хуки
-├── .env.example          # Пример переменных окружения
-├── alembic.ini           # Alembic конфигурация
-├── Dockerfile            # Docker образ приложения
-├── index.html            # Фронтенд (Soft UI дизайн)
-├── docker-compose.yaml   # PostgreSQL контейнер
-├── pyproject.toml        # Зависимости проекта
-└── README.md             # Документация
+│       └── ci-cd.yaml            # GitHub Actions workflow
+├── .pre-commit-config.yaml       # Pre-commit hooks
+├── .env.example                  # Example environment variables
+├── alembic.ini                   # Alembic configuration
+├── docker-compose.yaml           # PostgreSQL + Redis containers
+├── Dockerfile                    # Application Docker image
+├── index.html                    # Frontend (Soft UI design)
+├── pyproject.toml                # Project dependencies
+└── README.md                     # Documentation
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-### Предварительные требования
+### Prerequisites
 
 - Python 3.9+
-- uv (рекомендуется) или pip
-- Docker & Docker Compose (для БД)
+- uv (recommended) or pip
+- Docker & Docker Compose (for database and Redis)
 
-### 1. Клонирование репозитория
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/GloryWater/url_shortener.git
 cd url_shortener
 ```
 
-### 2. Установка зависимостей
+### 2. Install Dependencies
 
 ```bash
-# Создание виртуального окружения и установка зависимостей через uv
+# Create virtual environment and install dependencies via uv
 uv sync --extra dev
 
-# Или через pip:
+# Or via pip:
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-### 3. Настройка переменных окружения
+### 3. Configure Environment Variables
 
-Скопируйте `.env.example` в `.env` и настройте при необходимости:
+Copy `.env.example` to `.env` and configure as needed:
 
 ```bash
 cp .env.example .env
 ```
 
-**Основные переменные:**
-- `POSTGRES_HOST`, `POSTGRES_PORT` — хост и порт БД
-- `POSTGRES_USER`, `POSTGRES_PASSWORD` — учетные данные БД
-- `SQL_ECHO` — логирование SQL-запросов (`true`/`false`)
-- `ALLOWED_ORIGINS` — разрешенные CORS origin (через запятую)
-- `DEBUG` — режим отладки
-- `RATE_LIMIT_PER_MINUTE` — лимит запросов в минуту
+**New v3.0 variables:**
+- `REDIS_HOST`, `REDIS_PORT` — Redis connection
+- `REDIS_TTL` — Cache TTL (default 24 hours)
+- `SECRET_KEY` — Key for JWT signing
+- `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` — Token lifetime
+- `ENVIRONMENT` — development/production
 
-### 4. Запуск базы данных (Docker)
+### 4. Start Database and Redis (Docker)
 
 ```bash
 docker-compose up -d
 ```
 
-База данных будет доступна на `localhost:6432`.
+Services:
+- PostgreSQL on `localhost:6432`
+- Redis on `localhost:6379`
 
-### 5. Применение миграций
+### 5. Apply Migrations
 
 ```bash
-# Применить все миграции
+# Apply all migrations (including the new one for users)
 uv run alembic upgrade head
 ```
 
-### 6. Запуск сервера
+### 6. Start Server and Worker
 
 ```bash
+# Terminal 1: Start API server
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8001
+
+# Terminal 2: Start background worker
+arq src.worker.WorkerSettings
 ```
 
-Сервер запустится на `http://localhost:8001`
+### 7. Open Frontend
 
-### 7. Открыть фронтенд
-
-Перейдите на `http://localhost:8001` — там уже ждет стильный интерфейс!
+Go to `http://localhost:8001` — a stylish web interface is included!
 
 ---
 
 ## 📡 API Endpoints
 
-### API v1 (рекомендуется)
+### Authentication v1
 
-| Метод  | Endpoint              | Описание                          | Тело запроса |
-|--------|-----------------------|-----------------------------------|--------------|
-| `POST` | `/api/v1/urls`        | Создать короткую ссылку           | `{long_url, custom_slug?, expires_in_days?}` |
-| `GET`  | `/api/v1/urls`        | Список всех ссылок (пагинация)    | `?page=1&limit=20` |
-| `GET`  | `/api/v1/urls/{slug}` | Получить информацию о ссылке      | — |
-| `DELETE` | `/api/v1/urls/{slug}` | Удалить ссылку                  | — |
-| `GET`  | `/api/v1/urls/{slug}/stats` | Статистика кликов           | — |
+| Method | Endpoint              | Description                       | Auth |
+|--------|-----------------------|-----------------------------------|------|
+| `POST` | `/api/v1/auth/register` | User registration                | ❌ |
+| `POST` | `/api/v1/auth/login`    | Login and get JWT token          | ❌ |
+| `GET`  | `/api/v1/auth/me`       | Current user information         | ✅ |
 
-### Legacy endpoints (для обратной совместимости)
+### API v1 (URLs)
 
-| Метод  | Endpoint      | Описание                    |
-|--------|---------------|-----------------------------|
-| `GET`  | `/`           | Главная страница (фронтенд) |
-| `POST` | `/short_url`  | Создать короткую ссылку     |
-| `GET`  | `/{slug}`     | Редирект + аналитика        |
+| Method | Endpoint              | Description                       | Auth |
+|--------|-----------------------|-----------------------------------|------|
+| `POST` | `/api/v1/urls`        | Create short URL                  | ❌ |
+| `GET`  | `/api/v1/urls`        | List all URLs (pagination)        | ❌ |
+| `GET`  | `/api/v1/urls/{slug}` | Get URL information               | ❌ |
+| `DELETE` | `/api/v1/urls/{slug}` | Delete URL                      | ✅ |
+| `GET`  | `/api/v1/urls/{slug}/stats` | Click statistics             | ❌ |
 
-### Health Check
+### Legacy Endpoints (for backward compatibility)
 
-| Метод  | Endpoint   | Описание              |
-|--------|------------|-----------------------|
-| `GET`  | `/health`  | Проверка здоровья API |
+| Method | Endpoint      | Description                     | Auth |
+|--------|---------------|---------------------------------|------|
+| `GET`  | `/`           | Main page (frontend)            | ❌ |
+| `POST` | `/short_url`  | Create short URL                | ❌ |
+| `GET`  | `/{slug}`     | Redirect + analytics            | ❌ |
+
+### Health Check & Metrics
+
+| Method | Endpoint   | Description             |
+|--------|------------|-------------------------|
+| `GET`  | `/health`  | API health check        |
+| `GET`  | `/metrics` | Prometheus metrics      |
 
 ---
 
-## 📝 Примеры запросов
+## 📝 Request Examples
 
-### Создание короткой ссылки
+### User Registration
+
+```bash
+curl -X POST http://localhost:8001/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "SecurePass123!"}'
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "is_active": true,
+  "is_superuser": false
+}
+```
+
+### Login and Get JWT Token
+
+```bash
+curl -X POST http://localhost:8001/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "SecurePass123!"}'
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+### Get Current User Information
+
+```bash
+curl http://localhost:8001/api/v1/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### Create Short URL
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/urls \
@@ -199,7 +270,7 @@ curl -X POST http://localhost:8001/api/v1/urls \
   -d '{"long_url": "https://github.com/GloryWater/url_shortener"}'
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "data": "aB3xY9",
@@ -210,7 +281,7 @@ curl -X POST http://localhost:8001/api/v1/urls \
 }
 ```
 
-### Создание с кастомным slug
+### Create with Custom Slug
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/urls \
@@ -218,7 +289,7 @@ curl -X POST http://localhost:8001/api/v1/urls \
   -d '{"long_url": "https://example.com", "custom_slug": "mylink"}'
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "data": "mylink",
@@ -229,7 +300,7 @@ curl -X POST http://localhost:8001/api/v1/urls \
 }
 ```
 
-### Создание с сроком действия
+### Create with Expiration
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/urls \
@@ -237,13 +308,13 @@ curl -X POST http://localhost:8001/api/v1/urls \
   -d '{"long_url": "https://example.com", "expires_in_days": 30}'
 ```
 
-### Получение информации о ссылке
+### Get URL Information
 
 ```bash
 curl http://localhost:8001/api/v1/urls/aB3xY9
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "slug": "aB3xY9",
@@ -256,13 +327,13 @@ curl http://localhost:8001/api/v1/urls/aB3xY9
 }
 ```
 
-### Статистика кликов
+### Click Statistics
 
 ```bash
 curl http://localhost:8001/api/v1/urls/aB3xY9/stats
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "total_clicks": 150,
@@ -271,19 +342,19 @@ curl http://localhost:8001/api/v1/urls/aB3xY9/stats
 }
 ```
 
-### Список ссылок с пагинацией
+### List URLs with Pagination
 
 ```bash
 curl "http://localhost:8001/api/v1/urls?page=1&limit=20"
 ```
 
-### Удаление ссылки
+### Delete URL
 
 ```bash
 curl -X DELETE http://localhost:8001/api/v1/urls/aB3xY9
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "success": true,
@@ -297,56 +368,56 @@ curl -X DELETE http://localhost:8001/api/v1/urls/aB3xY9
 curl http://localhost:8001/health
 ```
 
-**Ответ:**
+**Response:**
 ```json
 {
   "status": "healthy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "database": "connected"
 }
 ```
 
 ---
 
-## 🧪 Запуск тестов
+## 🧪 Running Tests
 
 ```bash
-# Запустить все тесты
+# Run all tests
 uv run pytest
 
-# Запустить с покрытием
+# Run with coverage
 uv run pytest --cov=src --cov-report=html
 
-# Запустить конкретный тест
+# Run specific test
 uv run pytest tests/test_api.py -v
 
-# Запустить тесты с выводом медленных тестов
+# Run tests with slow test output
 uv run pytest --durations=10
 ```
 
-> Тесты используют `aiosqlite` (in-memory SQLite) для изоляции и скорости.
+> Tests use `aiosqlite` (in-memory SQLite) for isolation and speed. Production uses PostgreSQL.
 
 ---
 
-## 🔍 Миграции БД (Alembic)
+## 🔍 Database Migrations (Alembic)
 
 ```bash
-# Создать новую миграцию (auto-generate)
+# Create new migration (auto-generate)
 uv run alembic revision --autogenerate -m "Description"
 
-# Создать пустую миграцию
+# Create empty migration
 uv run alembic revision -m "Description"
 
-# Применить миграции
+# Apply migrations
 uv run alembic upgrade head
 
-# Откатить миграцию
+# Rollback migration
 uv run alembic downgrade -1
 
-# Показать текущую ревизию
+# Show current revision
 uv run alembic current
 
-# Показать историю миграций
+# Show migration history
 uv run alembic history
 ```
 
@@ -354,11 +425,11 @@ uv run alembic history
 
 ## 🔒 Rate Limiting
 
-По умолчанию установлены лимиты:
-- **60 запросов в минуту** на IP
-- **1000 запросов в час** на IP
+Default limits are set:
+- **60 requests per minute** per IP
+- **1000 requests per hour** per IP
 
-Для изменения настройте в `.env`:
+To change, configure in `.env`:
 ```env
 RATE_LIMIT_PER_MINUTE=100
 RATE_LIMIT_PER_HOUR=2000
@@ -368,7 +439,7 @@ RATE_LIMIT_PER_HOUR=2000
 
 ## 🛡️ Security Headers
 
-Приложение автоматически добавляет security headers:
+The application automatically adds security headers:
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `X-XSS-Protection: 1; mode=block`
@@ -379,14 +450,14 @@ RATE_LIMIT_PER_HOUR=2000
 
 ---
 
-## 📊 Логирование
+## 📊 Logging
 
-### Development режим
+### Development Mode
 ```
 2026-02-20 12:00:00 | INFO     | src.main:100 | Request received
 ```
 
-### Production режим
+### Production Mode
 ```json
 {
   "timestamp": "2026-02-20T12:00:00.000000",
@@ -397,16 +468,16 @@ RATE_LIMIT_PER_HOUR=2000
 }
 ```
 
-Для включения production логирования установите:
+To enable production logging, set:
 ```env
 ENVIRONMENT=production
 ```
 
 ---
 
-## 📡 Swagger документация
+## 📡 Swagger Documentation
 
-После запуска сервера доступна интерактивная API документация:
+After starting the server, interactive API documentation is available:
 - **Swagger UI**: `http://localhost:8001/docs`
 - **ReDoc**: `http://localhost:8001/redoc`
 - **OpenAPI JSON**: `http://localhost:8001/openapi.json`
@@ -415,34 +486,34 @@ ENVIRONMENT=production
 
 ## 🚀 CI/CD
 
-Проект использует **GitHub Actions** для автоматической проверки и деплоя:
+The project uses **GitHub Actions** for automatic checking and deployment:
 
-| Job | Описание |
-|-----|----------|
-| 🔍 **Pre-commit** | Запускает все pre-commit хуки |
-| 🔍 **Lint** | Ruff + MyPy проверки |
-| 🧪 **Tests** | pytest с покрытием |
-| 🔒 **Security** | проверка зависимостей через Safety |
-| 📦 **Build** | сборка Docker образа (только main branch) |
-| 🚀 **Deploy** | деплой на сервер через SSH (только main branch) |
-
----
-
-## 🎨 Особенности фронтенда
-
-- **Soft UI / Glassmorphism** дизайн
-- **Адаптивная верстка** (Flexbox/Grid)
-- **Градиентный фон** (лиловый → голубой)
-- **Анимации** при загрузке результата
-- **Валидация** на клиенте
-- **Шрифт Inter** от Google Fonts
-- **Темная тема** по умолчанию
+| Job | Description |
+|-----|-------------|
+| 🔍 **Pre-commit** | Runs all pre-commit hooks |
+| 🔍 **Lint** | Ruff + MyPy checks |
+| 🧪 **Tests** | pytest with coverage |
+| 🔒 **Security** | dependency check via Safety |
+| 📦 **Build** | Docker image build (main branch only) |
+| 🚀 **Deploy** | deploy to server via SSH (main branch only) |
 
 ---
 
-## ⚙️ Конфигурация
+## 🎨 Frontend Features
 
-Все настройки находятся в `.env` файле:
+- **Soft UI / Glassmorphism** design
+- **Responsive layout** (Flexbox/Grid)
+- **Gradient background** (lilac → blue)
+- **Animations** on result loading
+- **Validation** on client side
+- **Inter font** from Google Fonts
+- **Dark theme** by default
+
+---
+
+## ⚙️ Configuration
+
+All settings are in the `.env` file:
 
 ```env
 # Application
@@ -480,40 +551,40 @@ SECRET_KEY=change-me-in-production
 
 ### v2.0 (2026-02-20)
 
-**Новые функции:**
-- ✅ pydantic-settings для валидации конфигурации
-- ✅ Alembic миграции
+**New Features:**
+- ✅ pydantic-settings for configuration validation
+- ✅ Alembic migrations
 - ✅ Rate Limiting (slowapi)
 - ✅ Health check endpoint
-- ✅ API версионирование (`/api/v1/`)
-- ✅ Аналитика переходов (Click модель)
-- ✅ Удаление ссылок (DELETE endpoint)
-- ✅ Список ссылок с пагинацией
-- ✅ Кастомные slug и срок действия
-- ✅ Валидация на дубликаты long_url
+- ✅ API versioning (`/api/v1/`)
+- ✅ Click analytics (Click model)
+- ✅ URL deletion (DELETE endpoint)
+- ✅ URL list with pagination
+- ✅ Custom slug and expiration
+- ✅ Duplicate long_url validation
 - ✅ Security headers middleware
-- ✅ Глобальные exception handlers
-- ✅ Расширенные тесты (52 теста)
-- ✅ Структурированное логирование
+- ✅ Global exception handlers
+- ✅ Extended tests (52 tests)
+- ✅ Structured logging
 
-**Breaking changes:**
-- API перемещен на `/api/v1/urls`
-- Legacy endpoints `/short_url` и `/{slug}` сохранены
+**Breaking Changes:**
+- API moved to `/api/v1/urls`
+- Legacy endpoints `/short_url` and `/{slug}` preserved
 
 ### v1.0 (Initial release)
 
-- Базовый функционал сокращения ссылок
+- Basic URL shortening functionality
 - PostgreSQL + SQLAlchemy
 - FastAPI backend
 - Vanilla JS frontend
 
 ---
 
-## 👤 Автор
+## 👤 Author
 
 **Evgeniy Sytcevich**
 
-Проект создан для демонстрации современных возможностей FastAPI и асинхронного стека Python.
+Project created to demonstrate modern FastAPI capabilities and Python async stack.
 
 ---
 

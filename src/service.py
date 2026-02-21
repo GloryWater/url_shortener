@@ -1,4 +1,4 @@
-"""Business logic service for URL shortener."""
+"""Business logic service for URL shortening."""
 
 from datetime import datetime
 from typing import Any
@@ -27,7 +27,7 @@ async def generate_short_url(
     custom_slug: str | None = None,
     expires_in_days: int | None = None,
 ) -> tuple[str, bool, datetime | None]:
-    """Generate a short URL with optional custom slug and expiration.
+    """Generate short URL with optional custom slug and expiration.
 
     Args:
         long_url: Original long URL
@@ -71,7 +71,7 @@ async def get_url_by_slug(slug: str, session: AsyncSession) -> str:
 
 
 async def get_url_info(slug: str, session: AsyncSession) -> dict[str, Any]:
-    """Get detailed information about a short URL.
+    """Get detailed information about short URL.
 
     Args:
         slug: Short URL slug
@@ -101,7 +101,7 @@ async def get_url_info(slug: str, session: AsyncSession) -> dict[str, Any]:
 
 
 async def delete_url(slug: str, session: AsyncSession) -> bool:
-    """Delete a short URL.
+    """Delete short URL.
 
     Args:
         slug: Short URL slug
@@ -123,10 +123,10 @@ async def list_urls(
     Args:
         session: Database session
         page: Page number (1-indexed)
-        limit: Items per page
+        limit: Number of items per page
 
     Returns:
-        Tuple of (list of URL info dicts, total count)
+        Tuple of (list of URL info dictionaries, total count)
     """
     records, total = await get_all_urls_paginated(session, page, limit)
 
@@ -152,14 +152,14 @@ async def check_existing_url(
     long_url: str,
     session: AsyncSession,
 ) -> str | None:
-    """Check if a long URL already has a short URL.
+    """Check if long URL already has a short URL.
 
     Args:
         long_url: Original long URL
         session: Database session
 
     Returns:
-        Existing slug if found, None otherwise
+        Existing slug if found, otherwise None
     """
     record = await get_url_by_long_url(long_url, session)
     if record and not record.is_expired():
