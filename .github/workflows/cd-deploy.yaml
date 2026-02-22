@@ -8,7 +8,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # GitHub repository names must be lowercase for container registry
+  IMAGE_NAME: ${{ github.repository_owner }}/url-shortener
+  # Convert owner to lowercase for GHCR compatibility
+  OWNER_LOWER: ${{ github.repository_owner }}
 
 jobs:
   build:
@@ -79,9 +82,10 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Set variables
-            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image.outputs.tag }}"
-            LATEST_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            # Set variables - convert owner to lowercase for GHCR
+            OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE="${{ env.REGISTRY }}/${OWNER_LOWER}/url-shortener:${{ steps.image.outputs.tag }}"
+            LATEST_IMAGE="${{ env.REGISTRY }}/${OWNER_LOWER}/url-shortener:latest"
 
             # Login to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
