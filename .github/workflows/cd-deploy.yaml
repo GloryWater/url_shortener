@@ -90,120 +90,116 @@ jobs:
             mkdir -p ~/url-shortener
             cd ~/url-shortener
 
-            # Create docker-compose.yaml if not exists
-            if [ ! -f docker-compose.yaml ]; then
-              echo "Creating docker-compose.yaml..."
-              cat > docker-compose.yaml << 'COMPOSE_EOF'
-            services:
-              db:
-                image: postgres:17
-                container_name: url-shortener-db
-                restart: unless-stopped
-                environment:
-                  POSTGRES_DB: urlshortener
-                  POSTGRES_USER: urlshortener
-                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-                volumes:
-                  - postgres_data:/var/lib/postgresql/data
-                healthcheck:
-                  test: ["CMD-SHELL", "pg_isready -U urlshortener"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 5
-                networks:
-                  - url-shortener-network
-
-              redis:
-                image: redis:7-alpine
-                container_name: url-shortener-redis
-                restart: unless-stopped
-                command: redis-server --appendonly yes
-                volumes:
-                  - redis_data:/data
-                healthcheck:
-                  test: ["CMD", "redis-cli", "ping"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 5
-                networks:
-                  - url-shortener-network
-
-              url-shortener:
-                image: ${IMAGE_NAME}
-                container_name: url-shortener-api
-                restart: unless-stopped
-                ports:
-                  - "${PORT:-8001}:8001"
-                environment:
-                  - PORT=8001
-                  - ENVIRONMENT=${ENVIRONMENT}
-                  - SECRET_KEY=${SECRET_KEY}
-                  - POSTGRES_HOST=db
-                  - POSTGRES_PORT=5432
-                  - POSTGRES_USER=${POSTGRES_USER}
-                  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-                  - POSTGRES_DB=${POSTGRES_DB}
-                  - REDIS_HOST=redis
-                  - REDIS_PORT=6379
-                  - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-                  - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
-                depends_on:
-                  db:
-                    condition: service_healthy
-                  redis:
-                    condition: service_healthy
-                networks:
-                  - url-shortener-network
-
-              worker:
-                image: ${IMAGE_NAME}
-                container_name: url-shortener-worker
-                restart: unless-stopped
-                command: arq src.worker.WorkerSettings
-                environment:
-                  - ENVIRONMENT=${ENVIRONMENT}
-                  - SECRET_KEY=${SECRET_KEY}
-                  - POSTGRES_HOST=db
-                  - POSTGRES_PORT=5432
-                  - POSTGRES_USER=${POSTGRES_USER}
-                  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-                  - POSTGRES_DB=${POSTGRES_DB}
-                  - REDIS_HOST=redis
-                  - REDIS_PORT=6379
-                depends_on:
-                  db:
-                    condition: service_healthy
-                  redis:
-                    condition: service_healthy
-                networks:
-                  - url-shortener-network
-
-            volumes:
-              postgres_data:
-              redis_data:
-
-            networks:
-              url-shortener-network:
-                driver: bridge
-            COMPOSE_EOF
-            fi
-
             # Create .env if not exists
             if [ ! -f .env ]; then
               echo "Creating .env..."
-              cat > .env << 'ENV_EOF'
-            PORT=8001
-            ENVIRONMENT=production
-            SECRET_KEY=change-me-in-production
-            POSTGRES_USER=urlshortener
-            POSTGRES_PASSWORD=change-me-in-production
-            POSTGRES_DB=urlshortener
-            POSTGRES_HOST=db
-            ALLOWED_ORIGINS=http://localhost:8001
-            JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-            ENV_EOF
+              echo "PORT=8001" > .env
+              echo "ENVIRONMENT=production" >> .env
+              echo "SECRET_KEY=change-me-in-production" >> .env
+              echo "POSTGRES_USER=urlshortener" >> .env
+              echo "POSTGRES_PASSWORD=change-me-in-production" >> .env
+              echo "POSTGRES_DB=urlshortener" >> .env
+              echo "POSTGRES_HOST=db" >> .env
+              echo "ALLOWED_ORIGINS=http://localhost:8001" >> .env
+              echo "JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env
               echo "WARNING: Please update .env with secure values!"
             fi
+
+            # Create docker-compose.yaml with proper image tag
+            echo "Creating docker-compose.yaml..."
+            cat > docker-compose.yaml << EOF
+services:
+  db:
+    image: postgres:17
+    container_name: url-shortener-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: urlshortener
+      POSTGRES_PASSWORD: \$POSTGRES_PASSWORD
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urlshortener"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - url-shortener-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: url-shortener-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - url-shortener-network
+
+  url-shortener:
+    image: \$IMAGE
+    container_name: url-shortener-api
+    restart: unless-stopped
+    ports:
+      - "\$PORT:8001"
+    environment:
+      - PORT=8001
+      - ENVIRONMENT=\$ENVIRONMENT
+      - SECRET_KEY=\$SECRET_KEY
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=\$POSTGRES_USER
+      - POSTGRES_PASSWORD=\$POSTGRES_PASSWORD
+      - POSTGRES_DB=\$POSTGRES_DB
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ALLOWED_ORIGINS=\$ALLOWED_ORIGINS
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=\$JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - url-shortener-network
+
+  worker:
+    image: \$IMAGE
+    container_name: url-shortener-worker
+    restart: unless-stopped
+    command: arq src.worker.WorkerSettings
+    environment:
+      - ENVIRONMENT=\$ENVIRONMENT
+      - SECRET_KEY=\$SECRET_KEY
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=\$POSTGRES_USER
+      - POSTGRES_PASSWORD=\$POSTGRES_PASSWORD
+      - POSTGRES_DB=\$POSTGRES_DB
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - url-shortener-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  url-shortener-network:
+    driver: bridge
+EOF
 
             # Detect docker-compose command
             if command -v docker-compose &> /dev/null; then
