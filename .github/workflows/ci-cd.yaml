@@ -142,19 +142,23 @@ jobs:
             # Login to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # Navigate to app directory
+            cd ~/url-shortener || exit
+
             # Pull new image
-            docker pull ghcr.io/${{ github.repository }}/url-shortener:latest
+            docker-compose -f docker-compose.prod.yaml pull url-shortener worker
 
-            # Stop and remove old container
-            docker stop url-shortener || true
-            docker rm url-shortener || true
+            # Restart services with new image
+            docker-compose -f docker-compose.prod.yaml up -d --no-deps --build url-shortener worker
 
-            # Run new container
-            docker run -d \
-              --name url-shortener \
-              --restart unless-stopped \
-              -p 8000:8000 \
-              ghcr.io/${{ github.repository }}/url-shortener:latest
+            # Wait for services to be healthy
+            sleep 10
+
+            # Run migrations
+            docker-compose -f docker-compose.prod.yaml exec -T url-shortener uv run alembic upgrade head || true
 
             # Clean up old images
             docker image prune -af --filter "until=24h"
+
+            # Verify deployment
+            docker-compose -f docker-compose.prod.yaml ps
