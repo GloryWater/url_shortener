@@ -44,3 +44,5 @@ dist/
 
 # OS files
 .DS_Store
+
+err_log.txt

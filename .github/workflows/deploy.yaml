@@ -102,7 +102,7 @@ jobs:
             echo "    environment:" >> docker-compose.yaml
             echo "      POSTGRES_DB: urlshortener" >> docker-compose.yaml
             echo "      POSTGRES_USER: urlshortener" >> docker-compose.yaml
-            echo "      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}" >> docker-compose.yaml
+            echo "      POSTGRES_PASSWORD: $$POSTGRES_PASSWORD" >> docker-compose.yaml
             echo "    volumes:" >> docker-compose.yaml
             echo "      - postgres_data:/var/lib/postgresql/data" >> docker-compose.yaml
             echo "    healthcheck:" >> docker-compose.yaml
@@ -133,20 +133,20 @@ jobs:
             echo "    container_name: url-shortener-api" >> docker-compose.yaml
             echo "    restart: unless-stopped" >> docker-compose.yaml
             echo "    ports:" >> docker-compose.yaml
-            echo "      - \"\${PORT:-8001}:8001\"" >> docker-compose.yaml
+            echo "      - \"$$PORT:8001\"" >> docker-compose.yaml
             echo "    environment:" >> docker-compose.yaml
             echo "      - PORT=8001" >> docker-compose.yaml
-            echo "      - ENVIRONMENT=\${ENVIRONMENT}" >> docker-compose.yaml
-            echo "      - SECRET_KEY=\${SECRET_KEY}" >> docker-compose.yaml
+            echo "      - ENVIRONMENT=$$ENVIRONMENT" >> docker-compose.yaml
+            echo "      - SECRET_KEY=$$SECRET_KEY" >> docker-compose.yaml
             echo "      - POSTGRES_HOST=db" >> docker-compose.yaml
             echo "      - POSTGRES_PORT=5432" >> docker-compose.yaml
-            echo "      - POSTGRES_USER=\${POSTGRES_USER}" >> docker-compose.yaml
-            echo "      - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}" >> docker-compose.yaml
-            echo "      - POSTGRES_DB=\${POSTGRES_DB}" >> docker-compose.yaml
+            echo "      - POSTGRES_USER=$$POSTGRES_USER" >> docker-compose.yaml
+            echo "      - POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker-compose.yaml
+            echo "      - POSTGRES_DB=$$POSTGRES_DB" >> docker-compose.yaml
             echo "      - REDIS_HOST=redis" >> docker-compose.yaml
             echo "      - REDIS_PORT=6379" >> docker-compose.yaml
-            echo "      - ALLOWED_ORIGINS=\${ALLOWED_ORIGINS}" >> docker-compose.yaml
-            echo "      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=\${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}" >> docker-compose.yaml
+            echo "      - ALLOWED_ORIGINS=$$ALLOWED_ORIGINS" >> docker-compose.yaml
+            echo "      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=$$JWT_ACCESS_TOKEN_EXPIRE_MINUTES" >> docker-compose.yaml
             echo "    depends_on:" >> docker-compose.yaml
             echo "      db:" >> docker-compose.yaml
             echo "        condition: service_healthy" >> docker-compose.yaml
@@ -161,13 +161,13 @@ jobs:
             echo "    restart: unless-stopped" >> docker-compose.yaml
             echo "    command: arq src.worker.WorkerSettings" >> docker-compose.yaml
             echo "    environment:" >> docker-compose.yaml
-            echo "      - ENVIRONMENT=\${ENVIRONMENT}" >> docker-compose.yaml
-            echo "      - SECRET_KEY=\${SECRET_KEY}" >> docker-compose.yaml
+            echo "      - ENVIRONMENT=$$ENVIRONMENT" >> docker-compose.yaml
+            echo "      - SECRET_KEY=$$SECRET_KEY" >> docker-compose.yaml
             echo "      - POSTGRES_HOST=db" >> docker-compose.yaml
             echo "      - POSTGRES_PORT=5432" >> docker-compose.yaml
-            echo "      - POSTGRES_USER=\${POSTGRES_USER}" >> docker-compose.yaml
-            echo "      - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}" >> docker-compose.yaml
-            echo "      - POSTGRES_DB=\${POSTGRES_DB}" >> docker-compose.yaml
+            echo "      - POSTGRES_USER=$$POSTGRES_USER" >> docker-compose.yaml
+            echo "      - POSTGRES_PASSWORD=$$POSTGRES_PASSWORD" >> docker-compose.yaml
+            echo "      - POSTGRES_DB=$$POSTGRES_DB" >> docker-compose.yaml
             echo "      - REDIS_HOST=redis" >> docker-compose.yaml
             echo "      - REDIS_PORT=6379" >> docker-compose.yaml
             echo "    depends_on:" >> docker-compose.yaml
