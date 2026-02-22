@@ -165,7 +165,11 @@ class WorkerSettings:
     functions = [process_click_event, cleanup_expired_urls]
     cron_jobs = [
         # Run cleanup daily at 3 AM UTC
-        {"coroutine": cleanup_expired_urls, "minute": 0, "hour": 3},
+        {
+            "coroutine": cleanup_expired_urls,
+            "minute": 0,
+            "hour": 3,
+        },
     ]
     max_jobs = 10
     job_timeout = 30

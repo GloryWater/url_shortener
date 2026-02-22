@@ -71,9 +71,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
-    # Setup Prometheus metrics
-    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
-
     yield
 
     # Shutdown: cleanup
@@ -94,6 +91,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
 )
+
+# Setup Prometheus metrics (must be done before adding routes)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 # Include routers
 app.include_router(auth_router, prefix="/api/v1")
