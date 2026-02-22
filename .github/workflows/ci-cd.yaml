@@ -162,24 +162,31 @@ jobs:
                 echo "POSTGRES_DB=urlshortener" >> .env
                 echo "POSTGRES_HOST=db" >> .env
                 echo "ALLOWED_ORIGINS=http://your-domain.com" >> .env
-                echo "⚠️ IMPORTANT: Please update .env with secure values!"
+                echo "IMPORTANT: Please update .env with secure values!"
               fi
             fi
 
+            # Detect docker-compose command (plugin vs standalone)
+            if command -v docker-compose &> /dev/null; then
+              COMPOSE_CMD="docker-compose"
+            else
+              COMPOSE_CMD="docker compose"
+            fi
+
             # Pull new image
-            docker-compose -f docker-compose.prod.yaml pull url-shortener worker
+            $COMPOSE_CMD -f docker-compose.prod.yaml pull url-shortener worker
 
             # Restart services with new image
-            docker-compose -f docker-compose.prod.yaml up -d --no-deps --build url-shortener worker
+            $COMPOSE_CMD -f docker-compose.prod.yaml up -d --no-deps --build url-shortener worker
 
             # Wait for services to start
             sleep 10
 
             # Run migrations
-            docker-compose -f docker-compose.prod.yaml exec -T url-shortener uv run alembic upgrade head || true
+            $COMPOSE_CMD -f docker-compose.prod.yaml exec -T url-shortener uv run alembic upgrade head || true
 
             # Clean up old images
             docker image prune -af --filter "until=24h"
 
             # Verify deployment
-            docker-compose -f docker-compose.prod.yaml ps
+            $COMPOSE_CMD -f docker-compose.prod.yaml ps
