@@ -321,19 +321,26 @@ curl http://localhost:8001/health
 
 GitHub Actions автоматически развернет приложение при пуше в `main`.
 
+### Как это работает
+
+Проект использует **два отдельных workflow**:
+
+1. **CI Tests** (`.github/workflows/ci-tests.yaml`) — запускает тесты и проверки
+2. **CD Deploy** (`.github/workflows/cd-deploy.yaml`) — строит Docker image и разворачивает на сервере
+
 ### Шаг 1: Настройка SSH ключа
 
 **На локальной машине:**
 
 ```bash
 # Создайте SSH ключ для деплоя
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy_url_shortener
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
 
 # Скопируйте публичный ключ на сервер
-ssh-copy-id -i ~/.ssh/github_deploy_url_shortener.pub user@your-server.com
+ssh-copy-id -i ~/.ssh/github_deploy.pub user@your-server.com
 
 # Проверьте подключение
-ssh -i ~/.ssh/github_deploy_url_shortener user@your-server.com
+ssh -i ~/.ssh/github_deploy user@your-server.com
 ```
 
 ### Шаг 2: Добавление секретов в GitHub
@@ -344,92 +351,34 @@ ssh -i ~/.ssh/github_deploy_url_shortener user@your-server.com
 |--------|----------|--------|
 | `SERVER_HOST` | IP или домен сервера | `192.168.1.100` или `example.com` |
 | `SERVER_USERNAME` | Пользователь на сервере | `root` или `deploy` |
-| `SSH_PRIVATE_KEY` | Приватный SSH ключ | Содержимое `~/.ssh/github_deploy_url_shortener` |
+| `SSH_PRIVATE_KEY` | Приватный SSH ключ | Содержимое `~/.ssh/github_deploy` |
 
 **Как получить приватный ключ:**
 
 ```bash
-cat ~/.ssh/github_deploy_url_shortener
+cat ~/.ssh/github_deploy
 ```
 
 Скопируйте всё содержимое (включая `-----BEGIN OPENSSH PRIVATE KEY-----` и `-----END...`) и вставьте в секрет GitHub.
 
-### Шаг 3: Обновление CI/CD workflow
+### Шаг 3: Деплой
 
-**Важно:** Текущий workflow разворачивает только один контейнер без базы данных. Для полного развертывания нужно обновить `.github/workflows/ci-cd.yaml`.
-
-**Замените секцию `deploy` на:**
-
-```yaml
-deploy:
-  name: 🚀 Deploy to Server
-  runs-on: ubuntu-latest
-  permissions:
-    contents: read
-    packages: write
-  needs: [build]
-  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  env:
-    REPO_OWNER_LOWER: ${{ github.repository_owner }}
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Lowercase repository owner
-      run: echo "REPO_OWNER_LOWER=$(echo $REPO_OWNER_LOWER | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: Dockerfile
-        push: true
-        tags: ghcr.io/${{ env.REPO_OWNER_LOWER }}/url-shortener:latest,ghcr.io/${{ env.REPO_OWNER_LOWER }}/url-shortener:${{ github.sha }}
-
-    - name: Deploy to server via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          # Login to GHCR
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-          # Navigate to app directory
-          cd ~/url-shortener || exit
-
-          # Pull new image
-          docker-compose -f docker-compose.prod.yaml pull url-shortener worker
-
-          # Restart services with new image
-          docker-compose -f docker-compose.prod.yaml up -d --no-deps --build url-shortener worker
-
-          # Run migrations
-          docker-compose -f docker-compose.prod.yaml exec -T url-shortener uv run alembic upgrade head
-
-          # Clean up old images
-          docker image prune -af --filter "until=24h"
-```
-
-### Шаг 4: Деплой
+Просто сделайте пуш в `main` ветку:
 
 ```bash
-# Просто сделайте пуш в main ветку
 git add .
 git commit -m "Deploy new version"
 git push origin main
 ```
+
+**Что произойдет:**
+
+1. ✅ Запустятся тесты и проверки (pre-commit, ruff, mypy, pytest)
+2. ✅ Соберется Docker image
+3. ✅ Image будет запушен в GHCR (GitHub Container Registry)
+4. ✅ GitHub Actions подключится к серверу по SSH
+5. ✅ Сервер скачает новый image и перезапустит контейнеры
+6. ✅ Применятся миграции базы данных
 
 ### Мониторинг деплоя
 
