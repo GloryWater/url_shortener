@@ -1,0 +1,231 @@
+name: CD - Build and Deploy
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-ssh:
+    name: Deploy to Server via SSH
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: image
+        run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Set variables
+            IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image.outputs.tag }}"
+            LATEST_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+            # Login to GHCR
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Create app directory
+            mkdir -p ~/url-shortener
+            cd ~/url-shortener
+
+            # Create docker-compose.yaml if not exists
+            if [ ! -f docker-compose.yaml ]; then
+              echo "Creating docker-compose.yaml..."
+              cat > docker-compose.yaml << 'COMPOSE_EOF'
+            services:
+              db:
+                image: postgres:17
+                container_name: url-shortener-db
+                restart: unless-stopped
+                environment:
+                  POSTGRES_DB: urlshortener
+                  POSTGRES_USER: urlshortener
+                  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U urlshortener"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                networks:
+                  - url-shortener-network
+
+              redis:
+                image: redis:7-alpine
+                container_name: url-shortener-redis
+                restart: unless-stopped
+                command: redis-server --appendonly yes
+                volumes:
+                  - redis_data:/data
+                healthcheck:
+                  test: ["CMD", "redis-cli", "ping"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                networks:
+                  - url-shortener-network
+
+              url-shortener:
+                image: ${IMAGE_NAME}
+                container_name: url-shortener-api
+                restart: unless-stopped
+                ports:
+                  - "${PORT:-8001}:8001"
+                environment:
+                  - PORT=8001
+                  - ENVIRONMENT=${ENVIRONMENT}
+                  - SECRET_KEY=${SECRET_KEY}
+                  - POSTGRES_HOST=db
+                  - POSTGRES_PORT=5432
+                  - POSTGRES_USER=${POSTGRES_USER}
+                  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+                  - POSTGRES_DB=${POSTGRES_DB}
+                  - REDIS_HOST=redis
+                  - REDIS_PORT=6379
+                  - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+                  - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+                depends_on:
+                  db:
+                    condition: service_healthy
+                  redis:
+                    condition: service_healthy
+                networks:
+                  - url-shortener-network
+
+              worker:
+                image: ${IMAGE_NAME}
+                container_name: url-shortener-worker
+                restart: unless-stopped
+                command: arq src.worker.WorkerSettings
+                environment:
+                  - ENVIRONMENT=${ENVIRONMENT}
+                  - SECRET_KEY=${SECRET_KEY}
+                  - POSTGRES_HOST=db
+                  - POSTGRES_PORT=5432
+                  - POSTGRES_USER=${POSTGRES_USER}
+                  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+                  - POSTGRES_DB=${POSTGRES_DB}
+                  - REDIS_HOST=redis
+                  - REDIS_PORT=6379
+                depends_on:
+                  db:
+                    condition: service_healthy
+                  redis:
+                    condition: service_healthy
+                networks:
+                  - url-shortener-network
+
+            volumes:
+              postgres_data:
+              redis_data:
+
+            networks:
+              url-shortener-network:
+                driver: bridge
+            COMPOSE_EOF
+            fi
+
+            # Create .env if not exists
+            if [ ! -f .env ]; then
+              echo "Creating .env..."
+              cat > .env << 'ENV_EOF'
+            PORT=8001
+            ENVIRONMENT=production
+            SECRET_KEY=change-me-in-production
+            POSTGRES_USER=urlshortener
+            POSTGRES_PASSWORD=change-me-in-production
+            POSTGRES_DB=urlshortener
+            POSTGRES_HOST=db
+            ALLOWED_ORIGINS=http://localhost:8001
+            JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+            ENV_EOF
+              echo "WARNING: Please update .env with secure values!"
+            fi
+
+            # Detect docker-compose command
+            if command -v docker-compose &> /dev/null; then
+              COMPOSE_CMD="docker-compose"
+            else
+              COMPOSE_CMD="docker compose"
+            fi
+
+            # Pull new images
+            $COMPOSE_CMD pull url-shortener worker
+
+            # Restart services
+            $COMPOSE_CMD up -d --no-deps url-shortener worker
+
+            # Wait for startup
+            sleep 15
+
+            # Run migrations
+            $COMPOSE_CMD exec -T url-shortener uv run alembic upgrade head || true
+
+            # Cleanup
+            docker image prune -af --filter "until=24h"
+
+            # Show status
+            $COMPOSE_CMD ps
