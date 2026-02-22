@@ -541,6 +541,18 @@ docker-compose ps
 docker-compose restart url-shortener
 ```
 
+### Ошибка "Cannot add middleware after an application has started"
+
+**Проблема:** Instrumentator инициализируется внутри lifespan контекста.
+
+**Решение:** Убедитесь, что вы используете последнюю версию кода. Эта ошибка была исправлена в версии 0.3.1.
+
+### Ошибка "cron_jobs, must be instances of CronJob"
+
+**Проблема:** Неправильный формат cron_jobs в worker.py.
+
+**Решение:** Убедитесь, что вы используете последнюю версию кода. Эта ошибка была исправлена в версии 0.3.1.
+
 ### Ошибка подключения к базе данных
 
 ```bash
