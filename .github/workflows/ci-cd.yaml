@@ -142,8 +142,29 @@ jobs:
             # Login to GHCR
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Navigate to app directory
-            cd ~/url-shortener || exit
+            # Navigate to app directory (create if not exists)
+            mkdir -p ~/url-shortener
+            cd ~/url-shortener
+
+            # Check if docker-compose.prod.yaml exists, if not clone the repo
+            if [ ! -f docker-compose.prod.yaml ]; then
+              echo "First deployment - cloning repository..."
+              git clone https://github.com/${{ github.repository }}.git .
+
+              # Create .env file if not exists
+              if [ ! -f .env ]; then
+                echo "Creating .env file..."
+                echo "PORT=8001" > .env
+                echo "ENVIRONMENT=production" >> .env
+                echo "SECRET_KEY=change-me-in-production-use-long-random-string" >> .env
+                echo "POSTGRES_USER=urlshortener" >> .env
+                echo "POSTGRES_PASSWORD=change-me-use-strong-password" >> .env
+                echo "POSTGRES_DB=urlshortener" >> .env
+                echo "POSTGRES_HOST=db" >> .env
+                echo "ALLOWED_ORIGINS=http://your-domain.com" >> .env
+                echo "⚠️ IMPORTANT: Please update .env with secure values!"
+              fi
+            fi
 
             # Pull new image
             docker-compose -f docker-compose.prod.yaml pull url-shortener worker
@@ -151,7 +172,7 @@ jobs:
             # Restart services with new image
             docker-compose -f docker-compose.prod.yaml up -d --no-deps --build url-shortener worker
 
-            # Wait for services to be healthy
+            # Wait for services to start
             sleep 10
 
             # Run migrations
