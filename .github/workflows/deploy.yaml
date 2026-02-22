@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
   REPO: url-shortener
+  IMAGE_FULL: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.REPO }}
 
 jobs:
   deploy:
@@ -32,14 +33,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata and set lowercase owner
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.REPO }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-,format=long
+            type=sha,prefix=sha-,format=short
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPO }}:latest
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPO }}:sha-${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -49,14 +59,22 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          command_timeout: 10m
           script: |
-            # Convert owner to lowercase
-            OWNER_LOWER=$(echo "${{ env.OWNER }}" | tr '[:upper:]' '[:lower:]')
+            set -e
+
+            # Convert owner to lowercase for GHCR
+            OWNER_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
             IMAGE="${{ env.REGISTRY }}/${OWNER_LOWER}/${{ env.REPO }}:latest"
 
-            echo "Deploying image: $IMAGE"
+            echo "=========================================="
+            echo "Deploying URL Shortener"
+            echo "Image: $IMAGE"
+            echo "=========================================="
 
             # Login to GHCR
+            echo "Logging in to GHCR..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Create app directory
@@ -66,21 +84,25 @@ jobs:
             # Create .env if not exists
             if [ ! -f .env ]; then
               echo "Creating .env..."
-              echo "PORT=8001" > .env
-              echo "ENVIRONMENT=production" >> .env
-              echo "SECRET_KEY=change-me-in-production" >> .env
-              echo "POSTGRES_USER=urlshortener" >> .env
-              echo "POSTGRES_PASSWORD=change-me-in-production" >> .env
-              echo "POSTGRES_DB=urlshortener" >> .env
-              echo "POSTGRES_HOST=db" >> .env
-              echo "ALLOWED_ORIGINS=http://localhost:8001" >> .env
-              echo "JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30" >> .env
+              cat > .env << 'ENVFILE'
+PORT=8001
+ENVIRONMENT=production
+SECRET_KEY=change-me-in-production-use-openssl-rand-32
+POSTGRES_USER=urlshortener
+POSTGRES_PASSWORD=change-me-in-production-use-openssl-rand-16
+POSTGRES_DB=urlshortener
+POSTGRES_HOST=db
+ALLOWED_ORIGINS=http://localhost:8001
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+ENVFILE
               echo "WARNING: Please update .env with secure values!"
+              echo "Run: openssl rand -base64 32 for SECRET_KEY"
+              echo "Run: openssl rand -base64 16 for POSTGRES_PASSWORD"
             fi
 
             # Create docker-compose.yaml
             echo "Creating docker-compose.yaml..."
-            cat > docker-compose.yaml << EOF
+            cat > docker-compose.yaml << COMPOSEFILE
 services:
   db:
     image: postgres:17
@@ -89,7 +111,7 @@ services:
     environment:
       POSTGRES_DB: urlshortener
       POSTGRES_USER: urlshortener
-      POSTGRES_PASSWORD: \$POSTGRES_PASSWORD
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -116,24 +138,24 @@ services:
       - url-shortener-network
 
   url-shortener:
-    image: $IMAGE
+    image: ${IMAGE}
     container_name: url-shortener-api
     restart: unless-stopped
     ports:
-      - "\$PORT:8001"
+      - "${PORT:-8001}:8001"
     environment:
       - PORT=8001
-      - ENVIRONMENT=\$ENVIRONMENT
-      - SECRET_KEY=\$SECRET_KEY
+      - ENVIRONMENT=${ENVIRONMENT}
+      - SECRET_KEY=${SECRET_KEY}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=\$POSTGRES_USER
-      - POSTGRES_PASSWORD=\$POSTGRES_PASSWORD
-      - POSTGRES_DB=\$POSTGRES_DB
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - ALLOWED_ORIGINS=\$ALLOWED_ORIGINS
-      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=\$JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
     depends_on:
       db:
         condition: service_healthy
@@ -143,18 +165,18 @@ services:
       - url-shortener-network
 
   worker:
-    image: $IMAGE
+    image: ${IMAGE}
     container_name: url-shortener-worker
     restart: unless-stopped
     command: arq src.worker.WorkerSettings
     environment:
-      - ENVIRONMENT=\$ENVIRONMENT
-      - SECRET_KEY=\$SECRET_KEY
+      - ENVIRONMENT=${ENVIRONMENT}
+      - SECRET_KEY=${SECRET_KEY}
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - POSTGRES_USER=\$POSTGRES_USER
-      - POSTGRES_PASSWORD=\$POSTGRES_PASSWORD
-      - POSTGRES_DB=\$POSTGRES_DB
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
@@ -172,7 +194,7 @@ volumes:
 networks:
   url-shortener-network:
     driver: bridge
-EOF
+COMPOSEFILE
 
             # Detect docker-compose command
             if command -v docker-compose &> /dev/null; then
@@ -181,20 +203,30 @@ EOF
               COMPOSE_CMD="docker compose"
             fi
 
-            # Pull new images
+            echo "Pulling latest images..."
             $COMPOSE_CMD pull
 
-            # Restart all services
+            echo "Starting services..."
             $COMPOSE_CMD up -d
 
-            # Wait for startup
+            echo "Waiting for services to start (15 seconds)..."
             sleep 15
 
-            # Run migrations
-            $COMPOSE_CMD exec -T url-shortener uv run alembic upgrade head || true
+            echo "Running database migrations..."
+            $COMPOSE_CMD exec -T url-shortener uv run alembic upgrade head || echo "Warning: Migration may have failed"
 
-            # Cleanup
+            echo "Cleaning up old images..."
             docker image prune -af --filter "until=24h"
 
-            # Show status
+            echo ""
+            echo "=========================================="
+            echo "Deployment complete!"
+            echo "=========================================="
+            echo ""
+            echo "Service status:"
             $COMPOSE_CMD ps
+
+            echo ""
+            echo "To view logs:"
+            echo "  $COMPOSE_CMD logs -f"
+            echo ""
