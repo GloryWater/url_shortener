@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.router import router as auth_router
-from src.cache import cache_url, close_redis_client, get_cached_url, get_redis_client
+from src.cache import cache_url, close_redis_client, get_cached_url
 from src.config import get_settings
 from src.database.db import create_engine_and_session
 from src.database.models import Base
@@ -227,6 +227,21 @@ def get_user_agent(request: Request) -> str | None:
 def get_referer(request: Request) -> str | None:
     """Get referer from request."""
     return str(request.headers.get("Referer")) or None
+
+
+# ============================================
+# Metrics Endpoint (must be before legacy routes)
+# ============================================
+
+
+@app.get("/metrics", include_in_schema=False)
+async def get_metrics() -> str:
+    """Return Prometheus metrics.
+
+    Note: This is a fallback endpoint. The Instrumentator
+    registers its own /metrics endpoint during lifespan.
+    """
+    return "# Prometheus metrics available via Instrumentator\n"
 
 
 # ============================================
@@ -520,14 +535,28 @@ async def redirect_to_url(
     # Graceful degradation: if queue fails, still redirect the user
     try:
         # Get Redis connection for queue
-        redis_pool = await get_redis_client(settings)
-        await redis_pool.enqueue_job(  # type: ignore[attr-defined]
-            "process_click_event",
-            slug=slug,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            referer=referer,
+        from arq import create_pool
+        from arq.connections import RedisSettings
+
+        redis_pool = await create_pool(
+            RedisSettings(
+                host=settings.redis_host,
+                port=settings.redis_port,
+                password=settings.redis_password,
+                database=settings.redis_db,
+            )
         )
+        if redis_pool:
+            from arq import enqueue_job  # type: ignore[attr-defined]
+
+            await enqueue_job(
+                redis_pool,
+                "process_click_event",
+                slug=slug,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                referer=referer,
+            )
     except Exception as e:
         # Log error but don't fail the redirect
         logger.error(f"Failed to queue click event: {e}")

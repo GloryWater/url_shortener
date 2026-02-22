@@ -36,8 +36,25 @@ async def get_test_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+async def get_test_auth_session() -> AsyncGenerator[AsyncSession, None]:
+    """Override get_auth_session dependency for auth tests."""
+    async with new_session() as session:
+        yield session
+
+
 # Override dependencies for tests
 app.dependency_overrides[get_session] = get_test_session
+
+
+# Override auth session dependency - import here to avoid circular imports
+def _override_auth_dependency() -> None:
+    """Override auth session dependency for tests."""
+    from src.auth.router import get_auth_session
+
+    app.dependency_overrides[get_auth_session] = get_test_auth_session
+
+
+_override_auth_dependency()
 
 # Disable rate limiting for tests
 app.state.limiter.enabled = False

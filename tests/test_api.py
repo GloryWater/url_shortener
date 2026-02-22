@@ -1,6 +1,7 @@
 """API tests for URL shortener."""
 
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============================================
 # Basic URL Shortening Tests
@@ -261,7 +262,7 @@ async def test_list_urls_pagination(ac: AsyncClient) -> None:
 # ============================================
 
 
-async def test_get_url_stats(ac: AsyncClient) -> None:
+async def test_get_url_stats(ac: AsyncClient, session: AsyncSession) -> None:
     """Test getting URL click statistics."""
     # Create short URL
     create_result = await ac.post(
@@ -270,9 +271,11 @@ async def test_get_url_stats(ac: AsyncClient) -> None:
     )
     slug = create_result.json()["data"]
 
-    # Simulate clicks by accessing the URL
-    await ac.get(f"/{slug}", follow_redirects=False)
-    await ac.get(f"/{slug}", follow_redirects=False)
+    # Record clicks directly in database (since worker is not running in tests)
+    from src.database.crud import record_click
+
+    await record_click(slug, session, ip_address="127.0.0.1", user_agent="test-agent")
+    await record_click(slug, session, ip_address="127.0.0.1", user_agent="test-agent")
 
     # Get stats
     result = await ac.get(f"/api/v1/urls/{slug}/stats")

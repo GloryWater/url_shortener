@@ -1,5 +1,6 @@
 """Authentication dependencies."""
 
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -15,26 +16,33 @@ from src.database.models import User
 security = HTTPBearer(auto_error=False)
 
 
-def get_auth_session() -> AsyncSession:
+async def get_auth_session(
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> AsyncGenerator[AsyncSession, None]:
     """Get database session for authentication dependencies.
 
-    Returns:
+    Args:
+        settings: Application settings
+
+    Yields:
         AsyncSession instance
     """
-    settings = get_settings()
     _, async_session_maker = create_engine_and_session(settings)
-    return async_session_maker()
+    async with async_session_maker() as session:
+        yield session
 
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     settings: Annotated[Settings, Depends(get_settings)],
+    session: Annotated[AsyncSession, Depends(get_auth_session)],
 ) -> User:
     """Get current authenticated user.
 
     Args:
         credentials: HTTP authorization credentials
         settings: Application settings
+        session: Database session
 
     Returns:
         User instance
@@ -67,16 +75,13 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Create session for this request
-    _, async_session_maker = create_engine_and_session(settings)
-    async with async_session_maker() as session:
-        user = await get_user_by_id(int(user_id), session)
+    user = await get_user_by_id(int(user_id), session)
 
-        if user is None or not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found or inactive",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-        return user
+    return user
