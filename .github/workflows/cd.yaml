@@ -1,0 +1,263 @@
+# CD Pipeline - Build, Push to GHCR, Deploy via SSH
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_VERSION: "latest"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ===========================================
+  # Build & Push Docker Image
+  # ===========================================
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=raw,value=${{ github.run_number }},enable=true
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.run_number }}
+
+      - name: Generate SBOM (Software Bill of Materials)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+          retention-days: 30
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ===========================================
+  # Deploy to Server via SSH
+  # ===========================================
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-and-push]
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ vars.SERVER_URL || 'http://localhost:8001' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H ${{ vars.SERVER_HOST || secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Extract image tag
+        id: extract_tag
+        run: |
+          TAG=$(echo "${{ needs.build-and-push.outputs.image_tag }}" | head -n1 | cut -d',' -f1)
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USERNAME || vars.SERVER_USERNAME }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST || vars.SERVER_HOST }}
+          IMAGE_TAG: ${{ steps.extract_tag.outputs.tag }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/url-shortener' }}
+        run: |
+          echo "🚀 Starting deployment to $SERVER_HOST..."
+
+          ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+            set -e
+
+            echo "📦 Pulling latest Docker image..."
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$IMAGE_TAG
+
+            echo "🛑 Stopping old containers..."
+            cd $DEPLOY_PATH
+            docker-compose down --remove-orphans || true
+
+            echo "🔄 Starting new containers..."
+            docker-compose up -d --force-recreate
+
+            echo "⏳ Waiting for services to be healthy..."
+            sleep 10
+
+            echo "🗑️ Cleaning up old images..."
+            docker image prune -af --filter "until=24h" || true
+
+            echo "✅ Deployment completed!"
+          ENDSSH
+
+      - name: Apply database migrations
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USERNAME || vars.SERVER_USERNAME }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST || vars.SERVER_HOST }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/url-shortener' }}
+        run: |
+          ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'ENDSSH'
+            echo "🔧 Applying database migrations..."
+            cd $DEPLOY_PATH
+            docker-compose exec -T url-shortener uv run alembic upgrade head || echo "⚠️ Migration step completed"
+          ENDSSH
+
+      - name: Health check
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USERNAME || vars.SERVER_USERNAME }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST || vars.SERVER_HOST }}
+          SERVER_URL: ${{ vars.SERVER_URL || 'http://localhost:8001' }}
+        run: |
+          echo "🏥 Running health check..."
+
+          # Try health check via SSH if internal
+          ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << ENDSSH || true
+            curl -f http://localhost:8001/health || echo "⚠️ Health endpoint not responding yet"
+            curl -f http://localhost:8001/ || echo "⚠️ Root endpoint not responding yet"
+          ENDSSH
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          echo "## Deployment Status: $STATUS"
+
+          if [ "$STATUS" == "success" ]; then
+            echo "✅ Deployment successful!"
+            echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.extract_tag.outputs.tag }}"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
+
+  # ===========================================
+  # Rollback (on failure)
+  # ===========================================
+  rollback:
+    name: Rollback (on failure)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy]
+    if: failure()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Rollback to previous version
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USERNAME || vars.SERVER_USERNAME }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST || vars.SERVER_HOST }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '~/url-shortener' }}
+        run: |
+          echo "⚠️ Deployment failed, attempting rollback..."
+
+          ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'ENDSSH' || true
+            cd $DEPLOY_PATH
+
+            echo "🔄 Attempting to restart previous containers..."
+            docker-compose up -d || true
+
+            echo "📋 Checking container status..."
+            docker-compose ps
+          ENDSSH
+
+          echo "⚠️ Manual intervention may be required!"

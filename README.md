@@ -8,9 +8,10 @@ High-performance SaaS URL shortening service with caching, asynchronous analytic
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-passing-green?style=for-the-badge&logo=pytest)
+![Tests](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/ci.yaml?branch=main&style=for-the-badge&logo=pytest)
 ![Coverage](https://img.shields.io/codecov/c/github/GloryWater/url_shortener?style=for-the-badge&logo=codecov)
-![CI/CD](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/ci-cd.yaml?style=for-the-badge&logo=github-actions)
+![CI](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/ci.yaml?branch=main&style=for-the-badge&logo=github-actions)
+![CD](https://img.shields.io/github/actions/workflow/status/GloryWater/url_shortener/cd.yaml?branch=main&style=for-the-badge&logo=github-actions&label=deploy)
 
 ---
 
@@ -92,8 +93,12 @@ url_shortener/
 │   ├── env.py                    # Alembic environment
 │   └── script.py.mako            # Template for migrations
 ├── .github/
-│   └── workflows/
-│       └── ci-cd.yaml            # GitHub Actions workflow
+│   ├── workflows/
+│   │   ├── ci.yaml               # CI: tests, linting, security
+│   │   ├── cd.yaml               # CD: build & deploy
+│   │   ├── manual-deploy.yaml    # Manual deployment
+│   │   └── release.yaml          # Release workflow
+│   └── ENV_TEMPLATE.md           # Environment variables template
 ├── .pre-commit-config.yaml       # Pre-commit hooks
 ├── .env.example                  # Example environment variables
 ├── alembic.ini                   # Alembic configuration
@@ -486,16 +491,30 @@ After starting the server, interactive API documentation is available:
 
 ## 🚀 CI/CD
 
-The project uses **GitHub Actions** for automatic checking and deployment:
+> 📖 **Полная документация:** См. [`CI_CD.md`](CI_CD.md) и [`.github/workflows/`](.github/workflows/)
 
-| Job | Description |
+Проект использует **GitHub Actions** для автоматических проверок и деплоя:
+
+### Workflow файлы
+
+| Workflow | Описание | Триггеры |
+|----------|----------|----------|
+| **CI** ([`ci.yaml`](.github/workflows/ci.yaml)) | Тесты, линтеры, безопасность | Push в main/develop, PR |
+| **CD** ([`cd.yaml`](.github/workflows/cd.yaml)) | Сборка и деплой на сервер | Push в main |
+| **Manual Deploy** ([`manual-deploy.yaml`](.github/workflows/manual-deploy.yaml)) | Ручной деплой в любую среду | Workflow dispatch |
+| **Release** ([`release.yaml`](.github/workflows/release.yaml)) | Создание релизов с тегами | Push тега v* |
+
+### Статусы
+
+| Job | Описание |
 |-----|-------------|
-| 🔍 **Pre-commit** | Runs all pre-commit hooks |
-| 🔍 **Lint** | Ruff + MyPy checks |
-| 🧪 **Tests** | pytest with coverage |
-| 🔒 **Security** | dependency check via Safety |
-| 📦 **Build** | Docker image build (main branch only) |
-| 🚀 **Deploy** | deploy to server via SSH (main branch only) |
+| 🔍 **Lint** | Ruff linter + formatter |
+| 🔍 **Type Check** | MyPy strict mode |
+| 🧪 **Tests** | pytest с coverage (70%+) |
+| 🔒 **Security** | pip-audit + Bandit |
+| 🐳 **Docker** | Проверка сборки образа |
+| 📦 **Build & Push** | Сборка и push в GHCR |
+| 🚀 **Deploy** | Деплой на сервер via SSH |
 
 ---
 

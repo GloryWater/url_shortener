@@ -5,6 +5,10 @@ WORKDIR /app
 # Install uv and uvx
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Install netcat for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
 # UV settings for Docker
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -21,6 +25,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 # Now copy the rest of the code
 COPY src/ ./src/
 COPY index.html ./
+COPY alembic.ini ./
+COPY alembic/ ./alembic/
 
 # Install the project itself (if specified in pyproject.toml)
 RUN uv sync --frozen --no-dev
@@ -29,7 +35,12 @@ RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8001
 
-# Direct launch via uvicorn (uv run no longer needed thanks to PATH)
+# Use entrypoint script to run migrations before starting the app
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8001"]

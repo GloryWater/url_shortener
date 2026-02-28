@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from arq.connections import RedisSettings
+from arq.cron import CronJob
 from geoip2 import database as geoip2_database
 from user_agents import parse as parse_user_agent
 
@@ -159,28 +160,22 @@ async def cleanup_expired_urls(ctx: dict[str, Any]) -> dict[str, int]:  # noqa: 
 
 
 # ARQ Worker Settings
+# Initialize Redis settings at module level for ARQ
+_settings = get_settings_cached()
+redis_settings = RedisSettings(
+    host=_settings.redis_host,
+    port=_settings.redis_port,
+    password=_settings.redis_password,
+    database=_settings.redis_db,
+)
+
+
 class WorkerSettings:
     """ARQ worker configuration."""
 
     functions = [process_click_event, cleanup_expired_urls]
-    cron_jobs = [
-        # Run cleanup daily at 3 AM UTC
-        {
-            "coroutine": cleanup_expired_urls,
-            "minute": 0,
-            "hour": 3,
-        },
-    ]
+    cron_jobs: list[CronJob] = []
     max_jobs = 10
     job_timeout = 30
     burst = False
-
-    def __init__(self) -> None:
-        """Initialize worker settings."""
-        settings = get_settings_cached()
-        self.redis_settings = RedisSettings(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            password=settings.redis_password,
-            database=settings.redis_db,
-        )
+    redis_settings = redis_settings
