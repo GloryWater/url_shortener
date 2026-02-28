@@ -93,7 +93,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             # Navigate to project directory
-            cd /opt/url_shortener
+            cd /root/url_shortener
 
             # Login to GHCR to pull private images
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
