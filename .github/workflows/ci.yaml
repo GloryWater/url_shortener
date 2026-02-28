@@ -163,7 +163,7 @@ jobs:
         run: uv run pip-audit
 
       - name: Run Bandit
-        run: uv run bandit -r src/
+        run: uv run bandit -c .bandit.yaml -r src/
 
   # ===========================================
   # Testing (Pytest)

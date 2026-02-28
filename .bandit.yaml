@@ -1,0 +1,16 @@
+# Bandit configuration file
+# See https://bandit.readthedocs.io/en/latest/config.html
+
+exclude_dirs:
+  - tests
+  - .venv
+  - __pycache__
+
+# Ignore specific tests that produce false positives in this project
+exclude_tests:
+  - B104  # hardcoded_bind_all_interfaces (0.0.0.0 is standard for Docker)
+  - B106  # hardcoded_password_funcarg ("bearer" is OAuth2 token type, not a password)
+
+# Severity thresholds
+targets:
+  - src/
