@@ -263,31 +263,6 @@
       margin: 0 auto;
     }
 
-    /* Auth Links */
-    .auth-links {
-      display: flex;
-      gap: 1rem;
-      margin-top: 1.5rem;
-      justify-content: center;
-    }
-
-    .auth-link {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-subtle);
-      transition: all 0.3s ease;
-    }
-
-    .auth-link:hover {
-      color: var(--text-primary);
-      border-color: var(--accent-primary);
-      background: var(--bg-glass);
-    }
-
     /* Main Card */
     .card {
       width: 100%;
@@ -854,11 +829,6 @@
         High-performance SaaS platform with caching, analytics, and authentication
       </p>
 
-      <div class="auth-links">
-        <a href="#" class="auth-link" id="login-link">Login</a>
-        <a href="#" class="auth-link" id="register-link">Register</a>
-      </div>
-
       <div class="user-info" id="user-info">
         <span class="user-email" id="user-email"></span>
         <button class="logout-btn" id="logout-btn">Logout</button>
@@ -951,8 +921,6 @@
     const userInfo = document.getElementById("user-info");
     const userEmail = document.getElementById("user-email");
     const logoutBtn = document.getElementById("logout-btn");
-    const loginLink = document.getElementById("login-link");
-    const registerLink = document.getElementById("register-link");
 
     // Backend URL
     const backendBase = window.location.origin;
@@ -984,8 +952,6 @@
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("access_token");
       userInfo.classList.remove("show");
-      loginLink.style.display = "";
-      registerLink.style.display = "";
       showToast("success", "You have successfully logged out");
     });
 
