@@ -105,10 +105,10 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
             # Run database migrations
-            docker-compose run --rm url-shortener alembic upgrade head
+            docker compose run --rm url-shortener alembic upgrade head
 
             # Restart services without downtime
-            docker-compose up -d --remove-orphans
+            docker compose up -d --remove-orphans
 
             # Clean up old Docker images
             docker image prune -f

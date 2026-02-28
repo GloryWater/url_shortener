@@ -102,7 +102,7 @@ url_shortener/
 ├── .pre-commit-config.yaml       # Pre-commit hooks
 ├── .env.example                  # Example environment variables
 ├── alembic.ini                   # Alembic configuration
-├── docker-compose.yaml           # PostgreSQL + Redis containers
+├── docker compose.yaml           # PostgreSQL + Redis containers
 ├── Dockerfile                    # Application Docker image
 ├── index.html                    # Frontend (Soft UI design)
 ├── pyproject.toml                # Project dependencies
@@ -157,7 +157,7 @@ cp .env.example .env
 ### 4. Start Database and Redis (Docker)
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Services:
