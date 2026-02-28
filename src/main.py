@@ -514,7 +514,7 @@ async def redirect_to_url(
             if long_url:
                 await cache_url(slug, long_url, settings)
         except Exception as e:
-            logger.error(f"Error getting URL from database: {e}")
+            logger.warning(f"URL not found: {slug} - {e}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="URL not found or expired",
