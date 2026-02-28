@@ -46,3 +46,6 @@ dist/
 .DS_Store
 
 err_log.txt
+
+# Local development rules
+rules.md
