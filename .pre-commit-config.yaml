@@ -54,4 +54,3 @@ repos:
         args:
           - --strict
           - --ignore-missing-imports
-          - src/

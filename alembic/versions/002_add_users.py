@@ -7,7 +7,7 @@ __create_date__ = "2026-02-21"
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op  # type: ignore[attr-defined]
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "002_add_users"
